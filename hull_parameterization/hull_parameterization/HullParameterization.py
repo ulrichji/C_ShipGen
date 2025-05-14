@@ -53,7 +53,7 @@ import numpy as np
 # scipy.optimize import fsolve
 from matplotlib import pyplot as plt
 
-from stl import mesh
+import trimesh
 
 
 class Hull_Parameterization:
@@ -2234,15 +2234,14 @@ class Hull_Parameterization:
 
         return np.array(WL)
 
-    def gen_stl(
+    def gen_trimesh(
         self,
-        NUM_WL=50,
-        PointsPerWL=300,
-        bit_AddTransom=1,
-        bit_AddDeckLid=0,
-        bit_RefineBowAndStern=0,
-        namepath="Hull_Mesh",
-    ):
+        NUM_WL: int = 50,
+        PointsPerWL: int = 300,
+        bit_AddTransom: int = 1,
+        bit_AddDeckLid: int = 0,
+        bit_RefineBowAndStern: int = 0,
+    ) -> trimesh.Trimesh:
         """Generate a surface of the mesh by iterating through the points on the waterlines.
 
         Args:
@@ -2253,9 +2252,8 @@ class Hull_Parameterization:
             bit_RefineBowAndStern (int, optional): _description_. Defaults to 0.
 
         Returns:
-            _type_: _description_
+            trimesh.Trimesh: _description_
         """
-
         # compute number of triangles in the mesh
         # hullTriangles = 2 * (2*PointsPerWL - 2) * (NUM_WL - 1)
         # numTriangles = hullTriangles
@@ -2290,13 +2288,10 @@ class Hull_Parameterization:
 
         for i in range(0, NUM_WL - 1):
             # Find idx where the mesh grids begin to align between two rows returns a zero or 1:
-
             bow = np.argmax([pts[i][0, 0], pts[i + 1][0, 0]])
-
             stern = np.argmin([pts[i][-1, 0], pts[i + 1][-1, 0]])
 
             # Find index where mesh grid lines up and ends between each WL
-
             if bow:
                 idx_WLB1 = 1
                 idx_WLB0 = np.where(pts[i][:, 0] == pts[i + 1][idx_WLB1, 0])[0][0]
@@ -2312,15 +2307,12 @@ class Hull_Parameterization:
                 idx_WLS1 = np.where(pts[i + 1][:, 0] == pts[i][idx_WLS0, 0])[0][0]
 
             # check that these two are the same size:
-
             # Build the bow triangles Includes Port assignments
-
             if bow:
                 TriVec.append([pts[i + 1][idx_WLB1], pts[i][0], pts[i + 1][0]])
 
                 for j in range(0, idx_WLB0):
                     TriVec.append([pts[i + 1][idx_WLB1], pts[i][j + 1], pts[i][j]])
-
             else:
                 for j in range(0, idx_WLB1):
                     TriVec.append([pts[i][0], pts[i + 1][j], pts[i + 1][j + 1]])
@@ -2348,12 +2340,9 @@ class Hull_Parameterization:
             if stern:
                 for j in range(idx_WLS0, len(pts[i]) - 1):
                     TriVec.append([pts[i + 1][idx_WLS1], pts[i][j + 1], pts[i][j]])
-
                 TriVec.append([pts[i + 1][idx_WLS1], pts[i + 1][-1], pts[i][-1]])
-
             else:
                 TriVec.append([pts[i][idx_WLS0], pts[i + 1][idx_WLS1], pts[i][-1]])
-
                 for j in range(idx_WLS1, len(pts[i + 1]) - 1):
                     TriVec.append([pts[i][-1], pts[i + 1][j], pts[i + 1][j + 1]])
 
@@ -2365,24 +2354,20 @@ class Hull_Parameterization:
         # add triangles if there is a transom
         if bit_AddTransom:
             wl_above = len([i for i in z if i > self.SK[1]])
-
             z_idx = NUM_WL - wl_above - 1
-
             transomTriangles = 2 * wl_above - 1
-
             numTriangles += transomTriangles
 
         # Add triangles if there is a deck lid (meaning the ship becomes a closed body)
         if bit_AddDeckLid:
             numTriangles += 2 * len(pts[-1]) - 3
 
-        HULL = mesh.Mesh(np.zeros(numTriangles, dtype=mesh.Mesh.dtype))
-
-        HULL.vectors[0 : len(TriVec)] = np.copy(TriVec)
-
         TriVec_stbd = np.copy(TriVec[:, ::-1])
         TriVec_stbd[:, :, 1] *= -1
-        HULL.vectors[len(TriVec) : hullTriangles] = np.copy(TriVec_stbd)
+        # triangle_vertices += np.copy(TriVec_stbd)
+        triangle_vertices = np.zeros((numTriangles, 3, 3), dtype=np.float64)
+        triangle_vertices[0 : len(TriVec)] = TriVec
+        triangle_vertices[len(TriVec) : hullTriangles] = TriVec_stbd
 
         # NowBuild the transom:
         if bit_AddTransom:
@@ -2395,15 +2380,15 @@ class Hull_Parameterization:
 
             pts_tranp[:, 1] *= -1.0
 
-            HULL.vectors[hullTriangles] = np.array(
+            triangle_vertices[hullTriangles] = np.array(
                 [pts_trans[0], pts_trans[1], pts_tranp[1]]
             )
 
             for i in range(1, wl_above):
-                HULL.vectors[hullTriangles + 2 * i - 1] = np.array(
+                triangle_vertices[hullTriangles + 2 * i - 1] = np.array(
                     [pts_trans[i], pts_trans[i + 1], pts_tranp[i]]
                 )
-                HULL.vectors[hullTriangles + 2 * i] = np.array(
+                triangle_vertices[hullTriangles + 2 * i] = np.array(
                     [pts_tranp[i], pts_trans[i + 1], pts_tranp[i + 1]]
                 )
 
@@ -2411,29 +2396,35 @@ class Hull_Parameterization:
         if bit_AddDeckLid:
             # pts_Lids are starboard points on the deck
             # pts_Lidp are port points on the deck
-
             pts_Lids = pts[NUM_WL - 1]
-
             pts_Lidp = np.array(pts_Lids)
             pts_Lidp[:, 1] *= -1.0
 
             startTriangles = hullTriangles + transomTriangles
 
             # Points are orered so the right hand rule points the lid in positive z
-            HULL.vectors[startTriangles] = np.array(
+            triangle_vertices[startTriangles] = np.array(
                 [pts_Lids[0], pts_Lidp[1], pts_Lids[1]]
             )
 
             for i in range(1, len(pts_Lids) - 1):
-                HULL.vectors[startTriangles + 2 * i - 1] = np.array(
+                triangle_vertices[startTriangles + 2 * i - 1] = np.array(
                     [pts_Lids[i], pts_Lidp[i], pts_Lids[i + 1]]
                 )
-                HULL.vectors[startTriangles + 2 * i] = np.array(
+                triangle_vertices[startTriangles + 2 * i] = np.array(
                     [pts_Lids[i + 1], pts_Lidp[i], pts_Lidp[i + 1]]
                 )
 
-        HULL.save(namepath + ".stl")
-        return HULL
+        face_array = np.arange(3 * triangle_vertices.shape[0]).reshape((-1, 3))
+        face_array[:, [2, 0]] = face_array[:, [0, 2]]
+        hull = trimesh.Trimesh(
+            vertices=triangle_vertices.reshape((-1, 3)), faces=face_array
+        )
+
+        hull.vertices[:, 0] *= -1
+        hull.vertices[:, 0] += self.x_offset
+
+        return hull
 
     def gen_PC_for_Cw(self, draft, NUM_WL=51, PointsPerWL=301):
         """Generates the Point Grid and the Inputs for the Cw prediction.
