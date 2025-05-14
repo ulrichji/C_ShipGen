@@ -1,4 +1,4 @@
- #!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Mar 29 11:50:30 2022
@@ -47,19 +47,17 @@ The hull parameterization is defined in five chunks:
 
 """
 
-
-#import all the goodies:
+# import all the goodies:
 import numpy as np
+
 # scipy.optimize import fsolve
 from matplotlib import pyplot as plt
 
 from stl import mesh
 
 
-
 class Hull_Parameterization:
-
-    #Define parameters of targethull
+    # Define parameters of targethull
     def __init__(self, inputs):
         """Construct a hull parametrization from a vector that represents the
         parametrization.
@@ -75,28 +73,28 @@ class Hull_Parameterization:
         """
 
         self.LOA = inputs[0]
-        self.Lb = inputs[1] *self.LOA
-        self.Ls = inputs[2] *self.LOA
-        self.Bd = inputs[3]/2.0 *self.LOA#half breadth
-        self.Dd = inputs[4] *self.LOA
-        self.Bs = inputs[5] *self.Bd    #half breadth, fraction of Bd
-        self.WL = inputs[6] *self.Dd
-        self.Bc = inputs[7]/2.0 *self.LOA #half breadth
+        self.Lb = inputs[1] * self.LOA
+        self.Ls = inputs[2] * self.LOA
+        self.Bd = inputs[3] / 2.0 * self.LOA  # half breadth
+        self.Dd = inputs[4] * self.LOA
+        self.Bs = inputs[5] * self.Bd  # half breadth, fraction of Bd
+        self.WL = inputs[6] * self.Dd
+        self.Bc = inputs[7] / 2.0 * self.LOA  # half breadth
         self.Beta = inputs[8]
-        self.Rc = inputs[9]*self.Bc
-        self.Rk = inputs[10]*self.Dd
+        self.Rc = inputs[9] * self.Bc
+        self.Rk = inputs[10] * self.Dd
         self.BOW = np.zeros((3,))
-        self.BOW[0] = inputs[11]*0.5*self.Lb/self.Dd**2.0
-        self.BOW[1] = inputs[12]*0.5*self.Lb/self.Dd
+        self.BOW[0] = inputs[11] * 0.5 * self.Lb / self.Dd**2.0
+        self.BOW[1] = inputs[12] * 0.5 * self.Lb / self.Dd
         self.BK = np.zeros((2,))
-        self.BK[1] = inputs[13] *self.Dd #BK_z is an input - BK_x is solved for
+        self.BK[1] = inputs[13] * self.Dd  # BK_z is an input - BK_x is solved for
         self.Kappa_BOW = inputs[14]
         self.DELTA_BOW = np.zeros((3,))
-        self.DELTA_BOW[0] = inputs[15]*0.5*self.Lb/self.Dd**2.0
-        self.DELTA_BOW[1] = inputs[16]*0.5*self.Lb/self.Dd
+        self.DELTA_BOW[0] = inputs[15] * 0.5 * self.Lb / self.Dd**2.0
+        self.DELTA_BOW[1] = inputs[16] * 0.5 * self.Lb / self.Dd
         self.DRIFT = np.zeros((3,))
-        self.DRIFT[0] = inputs[17]*60.0/self.Dd**2.0
-        self.DRIFT[1] = inputs[18]*60.0/self.Dd
+        self.DRIFT[0] = inputs[17] * 60.0 / self.Dd**2.0
+        self.DRIFT[1] = inputs[18] * 60.0 / self.Dd
         self.DRIFT[2] = inputs[19]
         self.bit_EP_S = inputs[20]
         self.bit_EP_T = inputs[21]
@@ -106,15 +104,15 @@ class Hull_Parameterization:
         self.SK[1] = inputs[23]
         self.Kappa_STERN = inputs[24]
         self.DELTA_STERN = np.zeros((3,))
-        self.DELTA_STERN[0] = inputs[25]*0.5*self.Ls/self.Dd**2.0
-        self.DELTA_STERN[1] = inputs[26]*0.5*self.Ls/self.Dd
-        #self.RY_STERN = np.array(inputs[25:27])
-        #self.RX_STERN = np.array(inputs[27:29])
+        self.DELTA_STERN[0] = inputs[25] * 0.5 * self.Ls / self.Dd**2.0
+        self.DELTA_STERN[1] = inputs[26] * 0.5 * self.Ls / self.Dd
+        # self.RY_STERN = np.array(inputs[25:27])
+        # self.RX_STERN = np.array(inputs[27:29])
         self.Beta_trans = inputs[27]
-        self.Bc_trans = inputs[28]/2.0 *self.LOA # half breadth
-        self.Rc_trans = inputs[29]*self.Bc_trans
-        self.Rk_trans = inputs[30]*self.Dd*(1-self.SK[1])
-        #self.CONVERGE = np.array(inputs[33:36])
+        self.Bc_trans = inputs[28] / 2.0 * self.LOA  # half breadth
+        self.Rc_trans = inputs[29] * self.Bc_trans
+        self.Rk_trans = inputs[30] * self.Dd * (1 - self.SK[1])
+        # self.CONVERGE = np.array(inputs[33:36])
         self.bit_BB = inputs[31]
         self.bit_SB = inputs[32]
         self.Lbb = inputs[33]
@@ -130,26 +128,24 @@ class Hull_Parameterization:
         self.Lsbm = inputs[43]
         self.Rsb = inputs[44]
 
-        #Generate and Check the Forms of the Overall Hull
+        # Generate and Check the Forms of the Overall Hull
 
         self.GenGeneralHullform()
-        #C1 = print(self.GenralHullformConstraints())
+        # C1 = print(self.GenralHullformConstraints())
 
         self.GenCrossSection()
-       # C2 = print(self.CrossSectionConstraints())
+        # C2 = print(self.CrossSectionConstraints())
 
         self.GenBowForm()
-        #C3 = print(self.BowformConstraints())
+        # C3 = print(self.BowformConstraints())
 
         self.GenSternForm()
-        #C4 = print(self.SternFormConstraints())
+        # C4 = print(self.SternFormConstraints())
 
         self.GenBulbForms()
-        #C5 = print(self.BulbFormConstraints())
+        # C5 = print(self.BulbFormConstraints())
 
-
-
-    '''
+    """
     =======================================================================
                         Section 1: General Hull Form
     =======================================================================
@@ -180,25 +176,25 @@ class Hull_Parameterization:
             parameterization.
         6) WL < Dd
         7) All variables are positive or 0
-    '''
+    """
+
     def GenGeneralHullform(self):
         """Compute the other form factors of the general hullform that can be
         calculate from the inputs
         """
         self.Lm = self.LOA - self.Ls - self.Lb
 
-    def GenralHullformConstraints(self): # TODO Typo
+    def GenralHullformConstraints(self):  # TODO Typo
         """Check that constraints are satisfied for the hullfrom. If no
         constraint violations are found,
 
         Returns:
             np.ndarray: Genneral hullform constraints
         """
-        C = np.array([-self.LOA + self.Ls+self.Lb,
-                      self.WL - self.Dd])
+        C = np.array([-self.LOA + self.Ls + self.Lb, self.WL - self.Dd])
         return C
 
-    '''
+    """
     =======================================================================
                         Section 2: Cross Section
     =======================================================================
@@ -217,92 +213,120 @@ class Hull_Parameterization:
         1) Rc and Rk are agebraically limited to ensure that the radius can exist with the
             given Bd,Dd,BcdC, and Beta values.
 
-    '''
+    """
+
     def GenCrossSection(self):
         """Calculate the constants and other form factors that will allow future
         analysis of the cross section.
         """
 
-        #(y,z) pair for center of keel radius
-        self.Rk_Center = np.array([-self.Rk*(0.5 - 0.5*np.sign(self.Rk)),
-                                    self.Rk*(0.5 + 0.5*np.sign(self.Rk))])
-        #(y,z) pair for intersection of keel radius and LG line at the transom
-        self.Rk_LG_int = np.array([self.Rk_Center[0] + self.Rk*np.sin(np.pi*self.Beta/180.0),
-                                        self.Rk_Center[1] - self.Rk*np.cos(np.pi*self.Beta/180.0)])
+        # (y,z) pair for center of keel radius
+        self.Rk_Center = np.array(
+            [
+                -self.Rk * (0.5 - 0.5 * np.sign(self.Rk)),
+                self.Rk * (0.5 + 0.5 * np.sign(self.Rk)),
+            ]
+        )
+        # (y,z) pair for intersection of keel radius and LG line at the transom
+        self.Rk_LG_int = np.array(
+            [
+                self.Rk_Center[0] + self.Rk * np.sin(np.pi * self.Beta / 180.0),
+                self.Rk_Center[1] - self.Rk * np.cos(np.pi * self.Beta / 180.0),
+            ]
+        )
 
-
-        #solve for the lower gunwhale line: A*z + B*y + C = 0
-        A = np.array([[1.0, 1.0, 1.0],
-                      [self.Rk_LG_int[1], self.Rk_LG_int[0], 1.0],
-                      [-(self.Rk_LG_int[0]-self.Rk_Center[0]), (self.Rk_LG_int[1]-self.Rk_Center[1]), 0.0]])
+        # solve for the lower gunwhale line: A*z + B*y + C = 0
+        A = np.array(
+            [
+                [1.0, 1.0, 1.0],
+                [self.Rk_LG_int[1], self.Rk_LG_int[0], 1.0],
+                [
+                    -(self.Rk_LG_int[0] - self.Rk_Center[0]),
+                    (self.Rk_LG_int[1] - self.Rk_Center[1]),
+                    0.0,
+                ],
+            ]
+        )
         b = np.array([1.0, 0.0, 0.0])
 
-        self.LG = np.linalg.solve(A,b)
+        self.LG = np.linalg.solve(A, b)
 
         del A, b
 
-        self.Dc = -(self.LG[1]*self.Bc + self.LG[2])/self.LG[0]
+        self.Dc = -(self.LG[1] * self.Bc + self.LG[2]) / self.LG[0]
 
         # Upper Gunwhale Line: A*z + B*y + C = 0, where UG = [A,B,C]
-        A = np.array([[self.Dc, self.Bc, 1.0],
-                      [self.Dd, self.Bd, 1.0],
-                      [1.0, 1.0, 1.0]])
+        A = np.array(
+            [[self.Dc, self.Bc, 1.0], [self.Dd, self.Bd, 1.0], [1.0, 1.0, 1.0]]
+        )
 
-        b = np.array([0.0,0.0,1.0])
+        b = np.array([0.0, 0.0, 1.0])
 
-        self.UG = np.linalg.solve(A,b)
+        self.UG = np.linalg.solve(A, b)
 
         del A, b
 
         # Calculate terms for the half beam of the cross section of the transom:
-        self.Rc_Center = np.zeros((2,)) #(y,z) pair for center of chine radius at the transom
-        self.Rc_UG_int = np.zeros((2,)) #(y,z) pair for intersection of chine radius and UG line at the transom
-        self.Rc_LG_int = np.zeros((2,)) #(y,z) pair for intersection of chine radius and LG line at the transom
+        self.Rc_Center = np.zeros(
+            (2,)
+        )  # (y,z) pair for center of chine radius at the transom
+        self.Rc_UG_int = np.zeros(
+            (2,)
+        )  # (y,z) pair for intersection of chine radius and UG line at the transom
+        self.Rc_LG_int = np.zeros(
+            (2,)
+        )  # (y,z) pair for intersection of chine radius and LG line at the transom
 
-        #make math more readable to solve the chine
+        # make math more readable to solve the chine
         A1 = self.UG[0]
         B1 = self.UG[1]
-        theta = np.arctan2(-B1,A1)
-
+        theta = np.arctan2(-B1, A1)
 
         if theta < 0.0:
             theta = theta + np.pi
 
-        beta = self.Beta*np.pi/180.0
+        beta = self.Beta * np.pi / 180.0
         A2 = self.LG[0]
         B2 = self.LG[1]
 
+        A = np.array(
+            [
+                [B1, A1, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, B2, A2, 0.0, 0.0],
+                [1.0, 0.0, 0.0, 0.0, -1.0, 0.0],
+                [0.0, -1.0, 0.0, 0.0, 0.0, 1.0],
+                [0.0, 0.0, 1.0, 0.0, -1.0, 0.0],
+                [0.0, 0.0, 0.0, -1.0, 0.0, 1.0],
+            ]
+        )
 
-        A = np.array([[B1, A1, 0.0, 0.0, 0.0, 0.0],
-                      [0.0, 0.0, B2, A2, 0.0, 0.0],
-                      [1.0, 0.0, 0.0, 0.0, -1.0, 0.0],
-                      [0.0, -1.0, 0.0, 0.0, 0.0, 1.0],
-                      [0.0, 0.0, 1.0, 0.0, -1.0, 0.0],
-                      [0.0, 0.0, 0.0, -1.0, 0.0, 1.0]])
+        b = np.array(
+            [
+                -self.UG[2],
+                -self.LG[2],
+                self.Rc * np.sin(theta),
+                self.Rc * np.cos(theta),
+                self.Rc * np.sin(beta),
+                self.Rc * np.cos(beta),
+            ]
+        )
 
-        b = np.array([-self.UG[2],
-                      -self.LG[2],
-                      self.Rc*np.sin(theta),
-                      self.Rc*np.cos(theta),
-                      self.Rc*np.sin(beta),
-                      self.Rc*np.cos(beta)])
-
-        C = np.linalg.solve(A,b)
+        C = np.linalg.solve(A, b)
 
         self.Rc_UG_int = C[0:2]
         self.Rc_LG_int = C[2:4]
         self.Rc_Center = C[4:6]
 
-
     def CrossSectionConstraints(self):
-
-        C = [-self.Rc_UG_int[1] + self.Dc,
-             -self.Rc,
-             -self.Bc,
-             -self.Dc,
-             self.Rc_LG_int[0] - self.Bc,
-             self.Rk_LG_int[0] - self.Rc_LG_int[0],
-             0.00000001 -np.abs(self.Rk)]
+        C = [
+            -self.Rc_UG_int[1] + self.Dc,
+            -self.Rc,
+            -self.Bc,
+            -self.Dc,
+            self.Rc_LG_int[0] - self.Bc,
+            self.Rk_LG_int[0] - self.Rc_LG_int[0],
+            0.00000001 - np.abs(self.Rk),
+        ]
         return C
 
     def halfBeam_MidBody(self, z):
@@ -319,40 +343,49 @@ class Hull_Parameterization:
         if z < 0.0 or z > self.Dd:
             return -1
         elif z >= 0.0 and z < self.Rk_LG_int[1]:
-            return np.sign(self.Rk)*np.sqrt((self.Rk**2) - (z-self.Rk_Center[1])**2) + self.Rk_Center[0]
+            return (
+                np.sign(self.Rk) * np.sqrt((self.Rk**2) - (z - self.Rk_Center[1]) ** 2)
+                + self.Rk_Center[0]
+            )
         elif z >= self.Rk_LG_int[1] and z < self.Rc_LG_int[1]:
-            return -(self.LG[0] * z + self.LG[2])/self.LG[1]
+            return -(self.LG[0] * z + self.LG[2]) / self.LG[1]
         elif z >= self.Rc_LG_int[1] and z < self.Rc_UG_int[1]:
-            return np.sqrt((self.Rc**2) - (z-self.Rc_Center[1])**2) + self.Rc_Center[0]
+            return (
+                np.sqrt((self.Rc**2) - (z - self.Rc_Center[1]) ** 2) + self.Rc_Center[0]
+            )
         else:
-            return -(self.UG[0] * z + self.UG[2])/self.UG[1]
-
+            return -(self.UG[0] * z + self.UG[2]) / self.UG[1]
 
     def plot_MidBody_CrossSection(self):
         """Plot intersection points in blue. Plot chine pt in green.
         Plot Center of Rc and Rk in red. half Beam(z) in black.
         """
 
-        z = np.linspace(0.0, self.Dd, num = 200)
+        z = np.linspace(0.0, self.Dd, num=200)
         y = np.zeros((200,))
-        for i in range(0,len(z)):
+        for i in range(0, len(z)):
             y[i] = self.halfBeam_MidBody(z[i])
 
-
         fig2, ax2 = plt.subplots()
-        ax2.axis('equal')
-        #plt.axis([0,10,0,10])
+        ax2.axis("equal")
+        # plt.axis([0,10,0,10])
 
-        ax2.plot([self.Bd, self.Rc_UG_int[0], self.Rc_LG_int[0], self.Rk_LG_int[0], 0.0],
-                 [self.Dd, self.Rc_UG_int[1], self.Rc_LG_int[1], self.Rk_LG_int[1], 0.0], 'o', color = 'blue')
-        ax2.plot([self.Rc_Center[0], self.Rk_Center[0]], [self.Rc_Center[1], self.Rk_Center[1]],'o' ,color = 'red')
-        ax2.plot([self.Bc], [self.Dc],'o' ,color = 'green')
-        ax2.plot(y,z,'-', color = 'black', linewidth = 0.75)
+        ax2.plot(
+            [self.Bd, self.Rc_UG_int[0], self.Rc_LG_int[0], self.Rk_LG_int[0], 0.0],
+            [self.Dd, self.Rc_UG_int[1], self.Rc_LG_int[1], self.Rk_LG_int[1], 0.0],
+            "o",
+            color="blue",
+        )
+        ax2.plot(
+            [self.Rc_Center[0], self.Rk_Center[0]],
+            [self.Rc_Center[1], self.Rk_Center[1]],
+            "o",
+            color="red",
+        )
+        ax2.plot([self.Bc], [self.Dc], "o", color="green")
+        ax2.plot(y, z, "-", color="black", linewidth=0.75)
 
-
-
-
-    '''
+    """
     =======================================================================
                         Section 3: Bow Form
     =======================================================================
@@ -387,7 +420,7 @@ class Hull_Parameterization:
         3) 0 <= BK_z < Dd
         4) delta(z) > Bow(z) and Keel(z) for 0 <= z <= Dd  -> check z = 0,Dd,BK, Vert (Bow) and Vert (Delta)
 
-    '''
+    """
 
     def GenBowForm(self):
         """Compute the other form factors of the Bowform that can be calculated
@@ -397,42 +430,57 @@ class Hull_Parameterization:
         if self.BOW[0] == 0:
             Zv = -1.0
         else:
-           Zv = -self.BOW[1]/(2*self.BOW[0]) #Find Z of vertex of bowrise(z)
+            Zv = -self.BOW[1] / (2 * self.BOW[0])  # Find Z of vertex of bowrise(z)
 
-        C = np.array([self.BOW[0]*self.Dd**2.0 + self.BOW[1]*self.Dd,   #Bow rise protrusion at Deck
-                      self.BOW[0]*self.BK[1]**2.0 + self.BOW[1]*self.BK[1], #Bow rise protrusion at Bow-keel  intersection
-                      self.BOW[0]*Zv**2.0 + self.BOW[1]*Zv]) #Bowrise protrusio at vertex of bow rise eqn
+        C = np.array(
+            [
+                self.BOW[0] * self.Dd**2.0
+                + self.BOW[1] * self.Dd,  # Bow rise protrusion at Deck
+                self.BOW[0] * self.BK[1] ** 2.0
+                + self.BOW[1]
+                * self.BK[1],  # Bow rise protrusion at Bow-keel  intersection
+                self.BOW[0] * Zv**2.0 + self.BOW[1] * Zv,
+            ]
+        )  # Bowrise protrusio at vertex of bow rise eqn
 
-        if (Zv >= self.BK[1]*self.Dd and Zv <= self.Dd):
-            self.BOW[2] = -np.amin(C) # If the vertex is between the BK intersect and the Deck, then it is included in the min search
+        if Zv >= self.BK[1] * self.Dd and Zv <= self.Dd:
+            self.BOW[2] = -np.amin(
+                C
+            )  # If the vertex is between the BK intersect and the Deck, then it is included in the min search
         else:
             self.BOW[2] = -np.amin(C[0:2])
-
 
         # X Position of BK intersect
         self.BK[0] = self.bowrise(self.BK[1])
 
-
         # Calculate the Keelrise equation: it is of the form X = sqrt(Z/A) + Kappa_Bow*Lb or Z = A(X-K*Lb)**2, where self.Keel = A
-        self.KEEL_BOW = self.BK[1]/((self.BK[0]-self.Kappa_BOW*self.Lb)**2.0)
+        self.KEEL_BOW = self.BK[1] / ((self.BK[0] - self.Kappa_BOW * self.Lb) ** 2.0)
 
-
-        #Calculate the C for the Delta equation, where C is the constant such that max(Delta(z)) = 0 between 0 and Dd
+        # Calculate the C for the Delta equation, where C is the constant such that max(Delta(z)) = 0 between 0 and Dd
         if self.DELTA_BOW[0] == 0:
             Zv = -1.0
         else:
-            Zv = -self.DELTA_BOW[1]/(2*self.DELTA_BOW[0]) #Find Z of vertex of Delta(z)
+            Zv = -self.DELTA_BOW[1] / (
+                2 * self.DELTA_BOW[0]
+            )  # Find Z of vertex of Delta(z)
 
-        C = np.array([self.DELTA_BOW[0]*self.Dd**2.0 + self.DELTA_BOW[1]*self.Dd,   #BDelta at Deck
-                      0.0, #As is, Delta(0) = 0
-                      self.DELTA_BOW[0]*Zv**2.0 + self.DELTA_BOW[1]*Zv]) #Bowrise protrusion at vertex of bow rise eqn
+        C = np.array(
+            [
+                self.DELTA_BOW[0] * self.Dd**2.0
+                + self.DELTA_BOW[1] * self.Dd,  # BDelta at Deck
+                0.0,  # As is, Delta(0) = 0
+                self.DELTA_BOW[0] * Zv**2.0 + self.DELTA_BOW[1] * Zv,
+            ]
+        )  # Bowrise protrusion at vertex of bow rise eqn
 
-        if (Zv >= 0.0 and Zv <= self.Dd):
-            self.DELTA_BOW[2] = -np.amax(C) # If the vertex is between z = 0  and the Deck, then it is included in the search
+        if Zv >= 0.0 and Zv <= self.Dd:
+            self.DELTA_BOW[2] = -np.amax(
+                C
+            )  # If the vertex is between z = 0  and the Deck, then it is included in the search
         else:
             self.DELTA_BOW[2] = -np.amax(C[0:2])
 
-    #The following funcitons return the
+    # The following funcitons return the
 
     def bowrise(self, z):
         """Return the x position of the bowrise for a given z for BK_z <= z <= Dd
@@ -443,7 +491,7 @@ class Hull_Parameterization:
         Returns:
             _type_: _description_
         """
-        return self.BOW[0]*z**2.0 + self.BOW[1]*z + self.BOW[2]
+        return self.BOW[0] * z**2.0 + self.BOW[1] * z + self.BOW[2]
 
     def keelrise_bow(self, z):
         """Return the x position of the keelrise at the bow for a given z
@@ -455,7 +503,7 @@ class Hull_Parameterization:
         Returns:
             float: The x position of the keelrise at the bow for the given z.
         """
-        return -np.sqrt(z/self.KEEL_BOW) + self.Kappa_BOW*self.Lb
+        return -np.sqrt(z / self.KEEL_BOW) + self.Kappa_BOW * self.Lb
 
     def delta_bow(self, z):
         """Return the x position where the full cross section width is achieved
@@ -468,8 +516,12 @@ class Hull_Parameterization:
             float: The x position where the full cross section width is
                 achieved for the given z.
         """
-        return self.Lb + self.DELTA_BOW[0]*z**2.0 + self.DELTA_BOW[1]*z + self.DELTA_BOW[2]
-
+        return (
+            self.Lb
+            + self.DELTA_BOW[0] * z**2.0
+            + self.DELTA_BOW[1] * z
+            + self.DELTA_BOW[2]
+        )
 
     def drift(self, z):
         """Return the drift angle in radians.
@@ -480,9 +532,11 @@ class Hull_Parameterization:
         Returns:
             _type_: The drift angle in radians at the given z.
         """
-        return np.pi*(self.DRIFT[0]*z**2.0 + self.DRIFT[1]*z + self.DRIFT[2])/180.0
+        return (
+            np.pi * (self.DRIFT[0] * z**2.0 + self.DRIFT[1] * z + self.DRIFT[2]) / 180.0
+        )
 
-    def solve_waterline_bow(self,z):
+    def solve_waterline_bow(self, z):
         """Solve the cubic function: y(half beam) = Ax^3 + Bx^2 + CX + D for the
         half beam of the profile between the bow/keel rise and delta for a given
         z for 0 <= z <= Dd
@@ -501,16 +555,17 @@ class Hull_Parameterization:
 
         Y2 = self.halfBeam_MidBody(z)
 
-        A = np.array([[X1**3.0, X1**2.0, X1, 1.0],
-                      [3.0*X1**2.0, 2*X1, 1.0, 0.0],
-                      [X2**3.0, X2**2.0, X2, 1.0],
-                      [3.0*X2**2.0, 2.0*X2, 1.0, 0.0]])
+        A = np.array(
+            [
+                [X1**3.0, X1**2.0, X1, 1.0],
+                [3.0 * X1**2.0, 2 * X1, 1.0, 0.0],
+                [X2**3.0, X2**2.0, X2, 1.0],
+                [3.0 * X2**2.0, 2.0 * X2, 1.0, 0.0],
+            ]
+        )
 
-        b = np.array([0.0,
-                      np.tan(self.drift(z)),
-                      Y2,
-                      0.0])
-        return np.linalg.solve(A,b)
+        b = np.array([0.0, np.tan(self.drift(z)), Y2, 0.0])
+        return np.linalg.solve(A, b)
 
     def bow_profile(self, z):
         """
@@ -542,8 +597,10 @@ class Hull_Parameterization:
                 rise and delta(z).
         """
         y = np.zeros((len(x),))
-        for i in range(0,len(x)):
-            y[i] = PROF[0]*x[i]**3.0 + PROF[1]*x[i]**2.0 + PROF[2]*x[i] + PROF[3]
+        for i in range(0, len(x)):
+            y[i] = (
+                PROF[0] * x[i] ** 3.0 + PROF[1] * x[i] ** 2.0 + PROF[2] * x[i] + PROF[3]
+            )
         return y
 
     def bow_dydx(self, x, PROF):
@@ -558,13 +615,12 @@ class Hull_Parameterization:
         """
         dydx = np.zeros((len(x),))
 
-        for i in range(0,len(x)):
-            dydx[i] = 3.0*PROF[0]*x[i]**2.0 + 2.0*PROF[1]*x[i] + PROF[2]
+        for i in range(0, len(x)):
+            dydx[i] = 3.0 * PROF[0] * x[i] ** 2.0 + 2.0 * PROF[1] * x[i] + PROF[2]
 
         return dydx
 
-
-    def gen_waterline_bow(self, z, NUM_POINTS = 100, X = [0,1], bit_spaceOrGrid = 1):
+    def gen_waterline_bow(self, z, NUM_POINTS=100, X=[0, 1], bit_spaceOrGrid=1):
         """Generate a set of points [[X1,Y1] .... [X2,Y2]] that detail the
         curvature of the bow taper for a given z.
 
@@ -589,25 +645,22 @@ class Hull_Parameterization:
 
         prof = self.solve_waterline_bow(z)
 
-            #Set x based on spacing or grid
+        # Set x based on spacing or grid
         if bit_spaceOrGrid:
-
-            x = np.linspace(x1,x2,NUM_POINTS)
-            XY = np.zeros((len(x),2))
+            x = np.linspace(x1, x2, NUM_POINTS)
+            XY = np.zeros((len(x), 2))
 
         else:
             x = [i for i in X if (i > x1 and i <= x2)]
 
+            x = np.concatenate(([x1], x))
+            XY = np.zeros((len(x), 2))
 
-            x = np.concatenate(([x1],x))
-            XY = np.zeros((len(x),2))
-
-
-        XY[0,:] = [x1, 0.0]
+        XY[0, :] = [x1, 0.0]
 
         y = self.halfBeam_Bow(x[1:], prof)
 
-        XY[1:] = np.transpose([x[1:],y])
+        XY[1:] = np.transpose([x[1:], y])
 
         return XY
 
@@ -624,61 +677,55 @@ class Hull_Parameterization:
         if self.DRIFT[0] == 0.0:
             Zv = -1.0
         else:
-            Zv = -self.DRIFT[1]/(2.0*self.DRIFT[0])
-
+            Zv = -self.DRIFT[1] / (2.0 * self.DRIFT[0])
 
         if Zv >= 0.0 and Zv <= self.Dd:
-            vert_drift = [self.drift(Zv) - np.pi/2.0,
-                          -self.drift(Zv)]
+            vert_drift = [self.drift(Zv) - np.pi / 2.0, -self.drift(Zv)]
         else:
-            vert_drift = [-1,-1]
+            vert_drift = [-1, -1]
 
-
-        #Check that Delta_Bow(z) is always greater than the leading edge of the ship (keelrise(z) and bow(z))
-        #Check at z = 0, vertex of delta(z), vertex of bow(z), BKz, Dd
+        # Check that Delta_Bow(z) is always greater than the leading edge of the ship (keelrise(z) and bow(z))
+        # Check at z = 0, vertex of delta(z), vertex of bow(z), BKz, Dd
         if self.DELTA_BOW[0] == 0.0:
             Zv = -1.0
         else:
-            Zv = -self.DELTA_BOW[1]/ (2.0*self.DELTA_BOW[0])
+            Zv = -self.DELTA_BOW[1] / (2.0 * self.DELTA_BOW[0])
 
-        if Zv >=0.0 and Zv <= self.Dd:
-            vert_delta_bow = (-self.delta_bow(Zv) + self.bow_profile(Zv))
+        if Zv >= 0.0 and Zv <= self.Dd:
+            vert_delta_bow = -self.delta_bow(Zv) + self.bow_profile(Zv)
         else:
             vert_delta_bow = -1
-
 
         if self.BOW[0] == 0.0:
             Zv = -1.0
         else:
-            Zv = -self.BOW[1]/ (2.0*self.BOW[0])
+            Zv = -self.BOW[1] / (2.0 * self.BOW[0])
 
-        if Zv >=0.0 and Zv <= self.Dd:
-            vert_bow = (-self.delta_bow(Zv) + self.bow_profile(Zv))
+        if Zv >= 0.0 and Zv <= self.Dd:
+            vert_bow = -self.delta_bow(Zv) + self.bow_profile(Zv)
         else:
             vert_bow = -1
 
-
-
-
-        C = [self.Kappa_BOW*self.Lb - self.delta_bow(0.0),
-            self.drift(0.0) - np.pi/2.0,
-            -self.drift(0.0) ,
-            self.drift(self.Dd) - np.pi/2.0,
+        C = [
+            self.Kappa_BOW * self.Lb - self.delta_bow(0.0),
+            self.drift(0.0) - np.pi / 2.0,
+            -self.drift(0.0),
+            self.drift(self.Dd) - np.pi / 2.0,
             -self.drift(self.Dd),
             vert_drift[0],
             vert_drift[1],
             -self.BK[0],
-            self.BK[0] - self.Kappa_BOW*self.Lb,
+            self.BK[0] - self.Kappa_BOW * self.Lb,
             -self.BK[1],
             self.BK[1] - self.Dd,
             -self.delta_bow(self.Dd) + self.bow_profile(self.Dd),
             -self.delta_bow(self.BK[1]) + self.BK[0],
             vert_delta_bow,
-            vert_bow]
+            vert_bow,
+        ]
         return C
 
-
-    '''
+    """
     =======================================================================
                         Section 4: Stern Form
     =======================================================================
@@ -731,111 +778,155 @@ class Hull_Parameterization:
         2) 0 <= SK_x > Lb+Lm+ Kappa*Ls
         3) 0 <= SK_z < Dd
         4) delta(z) < Transom(z) and Sternrise(z) for 0 <= z <= Dd
-    '''
+    """
 
     def GenSternForm(self):
         # Recalculate SK to be a value instead of a percentage
-        self.SK[1] = self.SK[1]*self.Dd
+        self.SK[1] = self.SK[1] * self.Dd
 
         # Solve for the B value such that max(Transom(z)) = LOA
         if self.TRANS[0] >= 0.0:
-            self.TRANS[1] = self.LOA - self.TRANS[0]*self.Dd
+            self.TRANS[1] = self.LOA - self.TRANS[0] * self.Dd
         else:
-            self.TRANS[1] = self.LOA - self.TRANS[0]*self.SK[1]
+            self.TRANS[1] = self.LOA - self.TRANS[0] * self.SK[1]
 
-        #calculate the x value for the SK intersect
+        # calculate the x value for the SK intersect
         self.SK[0] = self.transom(self.SK[1])
 
         # find the constant term in the sternrise equation: z = A(x-Lb+Lm+Ls*Kappa_stern)^2
-        self.STERNRISE = self.SK[1]/(self.SK[0] - (self.Lb + self.Lm + self.Ls*self.Kappa_STERN))**2.0
+        self.STERNRISE = (
+            self.SK[1]
+            / (self.SK[0] - (self.Lb + self.Lm + self.Ls * self.Kappa_STERN)) ** 2.0
+        )
 
-        #Calculate the C for the Delta_stern equation, where C is the constant such that min(Delta_stern(z)) = 0 for z between 0 and Dd
+        # Calculate the C for the Delta_stern equation, where C is the constant such that min(Delta_stern(z)) = 0 for z between 0 and Dd
         if self.DELTA_STERN[0] == 0:
             Zv = -1.0
         else:
-            Zv = -self.DELTA_STERN[1]/(2*self.DELTA_STERN[0]) #Find Z of vertex of Delta(z)
+            Zv = -self.DELTA_STERN[1] / (
+                2 * self.DELTA_STERN[0]
+            )  # Find Z of vertex of Delta(z)
 
-        C = np.array([self.DELTA_STERN[0]*self.Dd**2.0 + self.DELTA_STERN[1]*self.Dd,   #Stern Delta at Deck
-                      0.0, #As is, Delta_Stern(0) = 0
-                      self.DELTA_STERN[0]*Zv**2.0 + self.DELTA_STERN[1]*Zv]) #vertex of Delta_STERN equation
+        C = np.array(
+            [
+                self.DELTA_STERN[0] * self.Dd**2.0
+                + self.DELTA_STERN[1] * self.Dd,  # Stern Delta at Deck
+                0.0,  # As is, Delta_Stern(0) = 0
+                self.DELTA_STERN[0] * Zv**2.0 + self.DELTA_STERN[1] * Zv,
+            ]
+        )  # vertex of Delta_STERN equation
 
-        if (Zv >= 0.0 and Zv <= self.Dd):
-            self.DELTA_STERN[2] = -np.amin(C) # If the vertex is between z = 0  and the Deck, then it is included in the search
+        if Zv >= 0.0 and Zv <= self.Dd:
+            self.DELTA_STERN[2] = -np.amin(
+                C
+            )  # If the vertex is between z = 0  and the Deck, then it is included in the search
         else:
             self.DELTA_STERN[2] = -np.amin(C[0:2])
 
+        # (y,z) pair for center of keel radius
+        self.Rk_Center_trans = np.array(
+            [
+                -self.Rk_trans * (0.5 - 0.5 * np.sign(self.Rk_trans)),
+                self.SK[1] + self.Rk_trans * (0.5 + 0.5 * np.sign(self.Rk_trans)),
+            ]
+        )
+        # (y,z) pair for intersection of keel radius and LG line at the transom
+        self.Rk_LG_int_trans = np.array(
+            [
+                self.Rk_Center_trans[0]
+                + self.Rk_trans * np.sin(np.pi * self.Beta_trans / 180.0),
+                self.Rk_Center_trans[1]
+                - self.Rk_trans * np.cos(np.pi * self.Beta_trans / 180.0),
+            ]
+        )
 
-        #(y,z) pair for center of keel radius
-        self.Rk_Center_trans = np.array([-self.Rk_trans*(0.5 - 0.5*np.sign(self.Rk_trans)),
-                                         self.SK[1] + self.Rk_trans*(0.5 + 0.5*np.sign(self.Rk_trans))])
-        #(y,z) pair for intersection of keel radius and LG line at the transom
-        self.Rk_LG_int_trans = np.array([self.Rk_Center_trans[0] + self.Rk_trans*np.sin(np.pi*self.Beta_trans/180.0),
-                                        self.Rk_Center_trans[1] - self.Rk_trans*np.cos(np.pi*self.Beta_trans/180.0)])
-
-
-        #solve for the lower gunwhale line: A*z + B*y + C = 0
-        A = np.array([[1.0, 1.0, 1.0],
-                      [self.Rk_LG_int_trans[1], self.Rk_LG_int_trans[0], 1.0],
-                      [-(self.Rk_LG_int_trans[0]-self.Rk_Center_trans[0]), (self.Rk_LG_int_trans[1]-self.Rk_Center_trans[1]), 0.0]])
+        # solve for the lower gunwhale line: A*z + B*y + C = 0
+        A = np.array(
+            [
+                [1.0, 1.0, 1.0],
+                [self.Rk_LG_int_trans[1], self.Rk_LG_int_trans[0], 1.0],
+                [
+                    -(self.Rk_LG_int_trans[0] - self.Rk_Center_trans[0]),
+                    (self.Rk_LG_int_trans[1] - self.Rk_Center_trans[1]),
+                    0.0,
+                ],
+            ]
+        )
         b = np.array([1.0, 0.0, 0.0])
 
-        self.LG_trans = np.linalg.solve(A,b)
+        self.LG_trans = np.linalg.solve(A, b)
 
         del A, b
 
-        self.Dc_trans = -(self.LG_trans[1]*self.Bc_trans + self.LG_trans[2])/self.LG_trans[0]
+        self.Dc_trans = (
+            -(self.LG_trans[1] * self.Bc_trans + self.LG_trans[2]) / self.LG_trans[0]
+        )
 
         # Upper Gunwhale Line: A*z + B*y + C = 0, where UG = [A,B,C]
-        A = np.array([[self.Dc_trans, self.Bc_trans , 1.0],
-                      [self.Dd, self.Bs, 1.0],
-                      [1.0, 1.0, 1.0]])
+        A = np.array(
+            [
+                [self.Dc_trans, self.Bc_trans, 1.0],
+                [self.Dd, self.Bs, 1.0],
+                [1.0, 1.0, 1.0],
+            ]
+        )
 
-        b = np.array([0.0,0.0,1.0])
+        b = np.array([0.0, 0.0, 1.0])
 
-        self.UG_trans = np.linalg.solve(A,b)
+        self.UG_trans = np.linalg.solve(A, b)
 
         del A, b
 
         # Calculate terms for the half beam of the cross section of the transom:
-        self.Rc_Center_trans = np.zeros((2,)) #(y,z) pair for center of chine radius at the transom
-        self.Rc_UG_int_trans = np.zeros((2,)) #(y,z) pair for intersection of chine radius and UG line at the transom
-        self.Rc_LG_int_trans = np.zeros((2,)) #(y,z) pair for intersection of chine radius and LG line at the transom
+        self.Rc_Center_trans = np.zeros(
+            (2,)
+        )  # (y,z) pair for center of chine radius at the transom
+        self.Rc_UG_int_trans = np.zeros(
+            (2,)
+        )  # (y,z) pair for intersection of chine radius and UG line at the transom
+        self.Rc_LG_int_trans = np.zeros(
+            (2,)
+        )  # (y,z) pair for intersection of chine radius and LG line at the transom
 
-        #make math more readable to solve the chine
+        # make math more readable to solve the chine
         A1 = self.UG_trans[0]
         B1 = self.UG_trans[1]
-        theta = np.arctan2(-B1,A1)
+        theta = np.arctan2(-B1, A1)
 
         if theta < 0.0:
             theta = theta + np.pi
 
-        beta = self.Beta_trans*np.pi/180.0
+        beta = self.Beta_trans * np.pi / 180.0
         A2 = self.LG_trans[0]
         B2 = self.LG_trans[1]
 
+        A = np.array(
+            [
+                [B1, A1, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, B2, A2, 0.0, 0.0],
+                [1.0, 0.0, 0.0, 0.0, -1.0, 0.0],
+                [0.0, -1.0, 0.0, 0.0, 0.0, 1.0],
+                [0.0, 0.0, 1.0, 0.0, -1.0, 0.0],
+                [0.0, 0.0, 0.0, -1.0, 0.0, 1.0],
+            ]
+        )
 
-        A = np.array([[B1, A1, 0.0, 0.0, 0.0, 0.0],
-                      [0.0, 0.0, B2, A2, 0.0, 0.0],
-                      [1.0, 0.0, 0.0, 0.0, -1.0, 0.0],
-                      [0.0, -1.0, 0.0, 0.0, 0.0, 1.0],
-                      [0.0, 0.0, 1.0, 0.0, -1.0, 0.0],
-                      [0.0, 0.0, 0.0, -1.0, 0.0, 1.0]])
+        b = np.array(
+            [
+                -self.UG_trans[2],
+                -self.LG_trans[2],
+                self.Rc_trans * np.sin(theta),
+                self.Rc_trans * np.cos(theta),
+                self.Rc_trans * np.sin(beta),
+                self.Rc_trans * np.cos(beta),
+            ]
+        )
 
-        b = np.array([-self.UG_trans[2],
-                      -self.LG_trans[2],
-                      self.Rc_trans*np.sin(theta),
-                      self.Rc_trans*np.cos(theta),
-                      self.Rc_trans*np.sin(beta),
-                      self.Rc_trans*np.cos(beta)])
-
-        C = np.linalg.solve(A,b)
+        C = np.linalg.solve(A, b)
 
         self.Rc_UG_int_trans = C[0:2]
         self.Rc_LG_int_trans = C[2:4]
         self.Rc_Center_trans = C[4:6]
-
-
-
 
     def transom(self, z):
         """Return the x position of the transom for a given z fr SK_z <= z <= Dd
@@ -846,7 +937,7 @@ class Hull_Parameterization:
         Returns:
             _type_: _description_
         """
-        return self.TRANS[0]*z + self.TRANS[1]
+        return self.TRANS[0] * z + self.TRANS[1]
 
     def sternrise(self, z):
         """Return the x position of the sternrise for a given z.
@@ -857,7 +948,9 @@ class Hull_Parameterization:
         Returns:
             float: The x position of the sternrise for a given z.
         """
-        return np.sqrt(z/self.STERNRISE) + self.Lb + self.Lm + self.Ls*self.Kappa_STERN
+        return (
+            np.sqrt(z / self.STERNRISE) + self.Lb + self.Lm + self.Ls * self.Kappa_STERN
+        )
 
     def stern_profile(self, z):
         """Shows the profile of the stern without the bulbous stern:
@@ -868,8 +961,10 @@ class Hull_Parameterization:
         Returns:
             float: The profile of the stern without the bulbous stern.
         """
-        if self.bit_SB and z <= self.WL*self.HSBOA:
-            return self.SB_Prof[0] # If there is a bulbous stern, we want to form the profile to lead into the SB.
+        if self.bit_SB and z <= self.WL * self.HSBOA:
+            return self.SB_Prof[
+                0
+            ]  # If there is a bulbous stern, we want to form the profile to lead into the SB.
 
         else:
             if z <= self.SK[1]:
@@ -886,8 +981,13 @@ class Hull_Parameterization:
         Returns:
             np.floating: Start position of stern taper at height z.
         """
-        return self.Lb + self.Lm + self.DELTA_STERN[0]* z**2.0 + self.DELTA_STERN[1]*z + self.DELTA_STERN[2]
-
+        return (
+            self.Lb
+            + self.Lm
+            + self.DELTA_STERN[0] * z**2.0
+            + self.DELTA_STERN[1] * z
+            + self.DELTA_STERN[2]
+        )
 
     def halfBeam_Transom(self, z):
         """Return the x,y pair of the transom at a height z.
@@ -909,35 +1009,62 @@ class Hull_Parameterization:
             y = -1.0
 
         elif z > self.SK[1] and z < self.Rk_LG_int_trans[1]:
-            y =  np.sign(self.Rk_trans)*np.sqrt((self.Rk_trans**2) - (z-self.Rk_Center_trans[1])**2) + self.Rk_Center_trans[0]
+            y = (
+                np.sign(self.Rk_trans)
+                * np.sqrt((self.Rk_trans**2) - (z - self.Rk_Center_trans[1]) ** 2)
+                + self.Rk_Center_trans[0]
+            )
         elif z >= self.Rk_LG_int_trans[1] and z < self.Rc_LG_int_trans[1]:
-            y =  -(self.LG_trans[0] * z + self.LG_trans[2])/self.LG_trans[1]
+            y = -(self.LG_trans[0] * z + self.LG_trans[2]) / self.LG_trans[1]
         elif z >= self.Rc_LG_int_trans[1] and z < self.Rc_UG_int_trans[1]:
-            y =  np.sqrt((self.Rc_trans**2) - (z-self.Rc_Center_trans[1])**2) + self.Rc_Center_trans[0]
+            y = (
+                np.sqrt((self.Rc_trans**2) - (z - self.Rc_Center_trans[1]) ** 2)
+                + self.Rc_Center_trans[0]
+            )
         else:
-            y =  -(self.UG_trans[0] * z + self.UG_trans[2])/self.UG_trans[1]
+            y = -(self.UG_trans[0] * z + self.UG_trans[2]) / self.UG_trans[1]
 
-        return [x,y]
+        return [x, y]
 
     def plot_Transom_CrossSection(self):
         """Plot intersection points in blue. Plot chine pt in green.
         Plot Center of Rc and Rk in red. half Beam(z) in black.
         """
-        z = np.linspace(self.SK[1], self.Dd, num = 200)
-        y = np.zeros((200,2))
-        for i in range(0,len(z)):
+        z = np.linspace(self.SK[1], self.Dd, num=200)
+        y = np.zeros((200, 2))
+        for i in range(0, len(z)):
             y[i] = self.halfBeam_Transom(z[i])
 
+        fig1, ax1 = plt.subplots()
+        ax1.axis("equal")
+        # plt.axis([0,10,0,10])
 
-        fig1,ax1 = plt.subplots()
-        ax1.axis('equal')
-        #plt.axis([0,10,0,10])
-
-        ax1.plot([self.Bs, self.Rc_UG_int_trans[0], self.Rc_LG_int_trans[0], self.Rk_LG_int_trans[0], 0.0],
-                 [self.Dd, self.Rc_UG_int_trans[1], self.Rc_LG_int_trans[1], self.Rk_LG_int_trans[1], self.SK[1]], 'o', color = 'blue')
-        ax1.plot([self.Rc_Center_trans[0], self.Rk_Center_trans[0]], [self.Rc_Center_trans[1], self.Rk_Center_trans[1]],'o' ,color = 'red')
-        ax1.plot([self.Bc_trans], [self.Dc_trans],'o' ,color = 'green')
-        ax1.plot(y[:,1],z,'-', color = 'black', linewidth = 0.75)
+        ax1.plot(
+            [
+                self.Bs,
+                self.Rc_UG_int_trans[0],
+                self.Rc_LG_int_trans[0],
+                self.Rk_LG_int_trans[0],
+                0.0,
+            ],
+            [
+                self.Dd,
+                self.Rc_UG_int_trans[1],
+                self.Rc_LG_int_trans[1],
+                self.Rk_LG_int_trans[1],
+                self.SK[1],
+            ],
+            "o",
+            color="blue",
+        )
+        ax1.plot(
+            [self.Rc_Center_trans[0], self.Rk_Center_trans[0]],
+            [self.Rc_Center_trans[1], self.Rk_Center_trans[1]],
+            "o",
+            color="red",
+        )
+        ax1.plot([self.Bc_trans], [self.Dc_trans], "o", color="green")
+        ax1.plot(y[:, 1], z, "-", color="black", linewidth=0.75)
 
     def halfBeam_Stern(self, x, PROF):
         """Return the halfbeam along the stern taper between delta(z) and
@@ -954,12 +1081,18 @@ class Hull_Parameterization:
         y = np.zeros((len(x),))
 
         if PROF[0]:
-            for i in range(0,len(x)):
-                y[i] = np.sqrt( np.abs(PROF[5]**2.0 * (1.0 - ((x[i] - PROF[6])/PROF[4])**2.0))) + PROF[7]  #ellipse
+            for i in range(0, len(x)):
+                y[i] = (
+                    np.sqrt(
+                        np.abs(
+                            PROF[5] ** 2.0 * (1.0 - ((x[i] - PROF[6]) / PROF[4]) ** 2.0)
+                        )
+                    )
+                    + PROF[7]
+                )  # ellipse
         else:
-            for i in range(0,len(x)):
-
-                y[i] = PROF[1]*x[i]**2.0 + PROF[2]*x[i] + PROF[3]  #parabola
+            for i in range(0, len(x)):
+                y[i] = PROF[1] * x[i] ** 2.0 + PROF[2] * x[i] + PROF[3]  # parabola
 
         return y
 
@@ -977,18 +1110,20 @@ class Hull_Parameterization:
         dydx = np.zeros((len(x),))
 
         if PROF[0]:
-            for i in range(0,len(x)):
-
-                dydx[i] = -PROF[5]*(x[i]-PROF[6])/(PROF[4]**2.0) * 1/np.sqrt(np.abs(1.0 - ((x[i] - PROF[6])/PROF[4])**2.0))
+            for i in range(0, len(x)):
+                dydx[i] = (
+                    -PROF[5]
+                    * (x[i] - PROF[6])
+                    / (PROF[4] ** 2.0)
+                    * 1
+                    / np.sqrt(np.abs(1.0 - ((x[i] - PROF[6]) / PROF[4]) ** 2.0))
+                )
 
         else:
-            for i in range(0,len(x)):
-
-                dydx[i] = 2.0*PROF[1]*x[i] + PROF[2]
+            for i in range(0, len(x)):
+                dydx[i] = 2.0 * PROF[1] * x[i] + PROF[2]
 
         return dydx
-
-
 
     def solve_waterline_stern(self, z):
         """Return PROF, a parabola [A,B,C], an ellipse [Rx, Ry, Cx, Cy] of the
@@ -1007,56 +1142,54 @@ class Hull_Parameterization:
         x1 = self.delta_stern(z)
         y1 = self.halfBeam_MidBody(z)
 
-        [x2,y2] = self.halfBeam_Transom(z)
+        [x2, y2] = self.halfBeam_Transom(z)
 
         PROF = np.zeros((8,))
 
         if z >= self.SK[1]:
             if self.bit_EP_T:
-                #If the curve is at the transom and the curve is an ellipse
-                Rx = x2-x1
-                Ry = y1-y2
+                # If the curve is at the transom and the curve is an ellipse
+                Rx = x2 - x1
+                Ry = y1 - y2
                 Cx = x1
                 Cy = y2
                 PROF[0] = 1
-                PROF[4:8] = np.array([Rx,Ry,Cx,Cy])
+                PROF[4:8] = np.array([Rx, Ry, Cx, Cy])
             else:
-                #If the curve is at the transom and the curve is a parabola:
-                A = np.array([[x1**2.0, x1, 1.0],
-                              [x2**2.0, x2, 1.0],
-                              [2.0*x1, 1.0, 0.0]])
+                # If the curve is at the transom and the curve is a parabola:
+                A = np.array(
+                    [[x1**2.0, x1, 1.0], [x2**2.0, x2, 1.0], [2.0 * x1, 1.0, 0.0]]
+                )
 
                 b = np.array([y1, y2, 0.0])
 
-                C = np.linalg.solve(A,b)
+                C = np.linalg.solve(A, b)
 
                 PROF[1:4] = C
         else:
             if self.bit_EP_S:
-                #If the curve is below the transom and the curve is an ellipse
-                Rx = x2-x1
-                Ry = y1-y2
+                # If the curve is below the transom and the curve is an ellipse
+                Rx = x2 - x1
+                Ry = y1 - y2
                 Cx = x1
                 Cy = y2
                 PROF[0] = 1
-                PROF[4:8] = np.array([Rx,Ry,Cx,Cy])
+                PROF[4:8] = np.array([Rx, Ry, Cx, Cy])
             else:
-                #If the curve is below the transom and the curve is a parabola:
-                A = np.array([[x1**2.0, x1, 1.0],
-                              [x2**2.0, x2, 1.0],
-                              [2.0*x1, 1.0, 0.0]])
+                # If the curve is below the transom and the curve is a parabola:
+                A = np.array(
+                    [[x1**2.0, x1, 1.0], [x2**2.0, x2, 1.0], [2.0 * x1, 1.0, 0.0]]
+                )
 
                 b = np.array([y1, y2, 0.0])
 
-                C = np.linalg.solve(A,b)
+                C = np.linalg.solve(A, b)
 
                 PROF[1:4] = C
 
         return PROF
 
-
-
-    def gen_waterline_stern(self, z, NUM_POINTS = 100, X = [0,1], bit_spaceOrGrid = 1):
+    def gen_waterline_stern(self, z, NUM_POINTS=100, X=[0, 1], bit_spaceOrGrid=1):
         """Generate a set of points [[X1,Y1] .... [X2,Y2]] that detail the
         curvature of the bow taper for a given z.
 
@@ -1080,33 +1213,25 @@ class Hull_Parameterization:
 
         x2 = self.stern_profile(z)
 
-
-
         prof = self.solve_waterline_stern(z)
 
-
-
         if bit_spaceOrGrid:
-            x = np.linspace(x1,x2,NUM_POINTS)
-            XY = np.zeros((len(x),2))
+            x = np.linspace(x1, x2, NUM_POINTS)
+            XY = np.zeros((len(x), 2))
 
         else:
             x = [i for i in X if (i >= x1 and i < x2)]
-            x = np.concatenate((x,[x2]))
-            XY = np.zeros((len(x),2))
+            x = np.concatenate((x, [x2]))
+            XY = np.zeros((len(x), 2))
 
         y = self.halfBeam_Stern(x[0:-1], prof)
 
+        XY[0:-1] = np.transpose([x[0:-1], y])
 
-        XY[0:-1] = np.transpose([x[0:-1],y])
-
-        #set the last element in the array to be the transom point
+        # set the last element in the array to be the transom point
         XY[-1] = self.halfBeam_Transom(z)
 
-
         return XY
-
-
 
     def SternformConstraints(self):
         """This is an incomplete list of geometric constrains for the hull form:
@@ -1118,35 +1243,31 @@ class Hull_Parameterization:
         if self.DELTA_STERN[0] == 0.0:
             Zv = -1.0
         else:
-            Zv = -self.DELTA_STERN[1]/ (2.0*self.DELTA_STERN[0])
+            Zv = -self.DELTA_STERN[1] / (2.0 * self.DELTA_STERN[0])
 
-        if Zv >=0.0 and Zv <= self.Dd:
-            vert_delta_stern = (self.delta_stern(Zv) - self.stern_profile(Zv))
+        if Zv >= 0.0 and Zv <= self.Dd:
+            vert_delta_stern = self.delta_stern(Zv) - self.stern_profile(Zv)
         else:
             vert_delta_stern = -1
 
-
-
-        C = [self.delta_stern(0.0) - (self.Lb + self.Lm + self.Ls*self.Kappa_STERN),
-             self.delta_stern(self.SK[1]) - self.SK[0],
-             vert_delta_stern,
-             self.delta_stern(self.Dd) - self.stern_profile(self.Dd),
-             (self.Lb + self.Lm + self.Ls*self.Kappa_STERN) - self.SK[0],
-             self.Bc_trans - self.halfBeam_MidBody(self.Dc_trans),
-             -self.Rc_UG_int_trans[1] + self.Dc_trans,
-             -self.Rc_trans,
-             -self.Bc_trans,
-             -self.Dc_trans,
-             self.Rc_LG_int_trans[0] - self.Bc_trans,
-             self.Rk_LG_int_trans[0] - self.Rc_LG_int_trans[0]]
-
+        C = [
+            self.delta_stern(0.0) - (self.Lb + self.Lm + self.Ls * self.Kappa_STERN),
+            self.delta_stern(self.SK[1]) - self.SK[0],
+            vert_delta_stern,
+            self.delta_stern(self.Dd) - self.stern_profile(self.Dd),
+            (self.Lb + self.Lm + self.Ls * self.Kappa_STERN) - self.SK[0],
+            self.Bc_trans - self.halfBeam_MidBody(self.Dc_trans),
+            -self.Rc_UG_int_trans[1] + self.Dc_trans,
+            -self.Rc_trans,
+            -self.Bc_trans,
+            -self.Dc_trans,
+            self.Rc_LG_int_trans[0] - self.Bc_trans,
+            self.Rk_LG_int_trans[0] - self.Rc_LG_int_trans[0],
+        ]
 
         return C
 
-
-
-
-    '''
+    """
     =======================================================================
                         Section 5: Bulb Forms
     =======================================================================
@@ -1183,7 +1304,7 @@ class Hull_Parameterization:
         4) 0.0 < (Lbb and Lsb) < TBD  (seems a bit outrageous) (but not infeasible technically)
         5) -1.0 < (Lbbm and Lsbm) < 1.0
         6) 0.0 < HSBOA < 1.0
-    '''
+    """
 
     def GenBulbForms(self):
         """Generate Prof for the bulbous bow and bulbous stern.
@@ -1203,32 +1324,28 @@ class Hull_Parameterization:
         self.SB_Prof = np.zeros((7,))
 
         if self.bit_BB:
-
             FP = self.bow_profile(self.WL)
 
-
             self.BB_Prof[0] = FP
-            self.BB_Prof[1] = (1.0 - self.Hbb)*self.WL
-            self.BB_Prof[2] = self.Hbb*self.WL
-            self.BB_Prof[3] = self.halfBeam_MidBody(self.BB_Prof[2]) *self.Bbb
-            self.BB_Prof[4] = self.Lbb*self.LOA*(1.0-self.Lbbm)
-            self.BB_Prof[5] = FP - self.LOA*self.Lbb*self.Lbbm
+            self.BB_Prof[1] = (1.0 - self.Hbb) * self.WL
+            self.BB_Prof[2] = self.Hbb * self.WL
+            self.BB_Prof[3] = self.halfBeam_MidBody(self.BB_Prof[2]) * self.Bbb
+            self.BB_Prof[4] = self.Lbb * self.LOA * (1.0 - self.Lbbm)
+            self.BB_Prof[5] = FP - self.LOA * self.Lbb * self.Lbbm
             self.BB_Prof[6] = 0.0
 
-
         if self.bit_SB:
-            SBs = self.Kappa_SB*self.Ls + self.Lm + self.Lb
+            SBs = self.Kappa_SB * self.Ls + self.Lm + self.Lb
 
             self.SB_Prof[0] = SBs
-            self.SB_Prof[1] = (1.0 - self.Hsb)*self.WL*self.HSBOA
-            self.SB_Prof[2] = self.Hsb*self.WL*self.HSBOA
-            self.SB_Prof[3] = self.halfBeam_MidBody(self.SB_Prof[2])*self.Bsb
-            self.SB_Prof[4] = self.Lsb*self.LOA*(1.0-self.Lsbm)
-            self.SB_Prof[5] = SBs + self.LOA*self.Lsb*self.Lsbm
+            self.SB_Prof[1] = (1.0 - self.Hsb) * self.WL * self.HSBOA
+            self.SB_Prof[2] = self.Hsb * self.WL * self.HSBOA
+            self.SB_Prof[3] = self.halfBeam_MidBody(self.SB_Prof[2]) * self.Bsb
+            self.SB_Prof[4] = self.Lsb * self.LOA * (1.0 - self.Lsbm)
+            self.SB_Prof[5] = SBs + self.LOA * self.Lsb * self.Lsbm
             self.SB_Prof[6] = 0.0
 
-
-    def BB_profile(self,z):
+    def BB_profile(self, z):
         """Return position of leading edge of SB.
 
         Args:
@@ -1238,9 +1355,21 @@ class Hull_Parameterization:
             np.floating: Position of leading edge of SB.
         """
         if z >= self.BB_Prof[2]:
-            return self.BB_Prof[5] - np.sqrt(np.abs(1.0 - ((z-self.Hbb*self.WL)/self.BB_Prof[1])**2.0))*self.BB_Prof[4]
+            return (
+                self.BB_Prof[5]
+                - np.sqrt(
+                    np.abs(1.0 - ((z - self.Hbb * self.WL) / self.BB_Prof[1]) ** 2.0)
+                )
+                * self.BB_Prof[4]
+            )
         else:
-            return self.BB_Prof[5] - np.sqrt(np.abs(1.0 - ((z-self.Hbb*self.WL)/self.BB_Prof[2])**2.0))*self.BB_Prof[4]
+            return (
+                self.BB_Prof[5]
+                - np.sqrt(
+                    np.abs(1.0 - ((z - self.Hbb * self.WL) / self.BB_Prof[2]) ** 2.0)
+                )
+                * self.BB_Prof[4]
+            )
 
     def halfBeam_BB(self, z, x):
         """Return the half breadth of the BB at height z and position x.
@@ -1259,24 +1388,25 @@ class Hull_Parameterization:
         else:
             Rz = self.BB_Prof[2]
 
-        Ry = np.sqrt(np.abs(1.0 - ((z - self.BB_Prof[2])/Rz)**2.0))*self.BB_Prof[3]
+        Ry = (
+            np.sqrt(np.abs(1.0 - ((z - self.BB_Prof[2]) / Rz) ** 2.0)) * self.BB_Prof[3]
+        )
 
         Rx = self.BB_Prof[5] - self.BB_profile(z)
 
         y = np.zeros((len(x),))
 
-        for i in range(0,len(x)):
-
+        for i in range(0, len(x)):
             if x[i] >= self.BB_Prof[5]:
                 y[i] = Ry
             else:
-                y[i] = np.sqrt(np.abs(1.0 - ((x[i] - self.BB_Prof[5])/Rx)**2.0))*Ry
+                y[i] = (
+                    np.sqrt(np.abs(1.0 - ((x[i] - self.BB_Prof[5]) / Rx) ** 2.0)) * Ry
+                )
 
         return y
 
-
-
-    def BB_dydx(self,z,x):
+    def BB_dydx(self, z, x):
         """Compute the slope dy/dx slope of the bulbous bow at height z and
         position x. This assumes x is within the bulbous bow x-range.
 
@@ -1295,23 +1425,27 @@ class Hull_Parameterization:
         else:
             Rz = self.BB_Prof[2]
 
-        Ry = np.sqrt(np.abs(1.0 - ((z - self.BB_Prof[2])/Rz)**2.0))*self.BB_Prof[3]
+        Ry = (
+            np.sqrt(np.abs(1.0 - ((z - self.BB_Prof[2]) / Rz) ** 2.0)) * self.BB_Prof[3]
+        )
         Rx = self.BB_Prof[5] - self.BB_profile(z)
 
-        for i in range(0,len(x)):
-
+        for i in range(0, len(x)):
             if x[i] >= self.BB_Prof[5]:
                 dydx[i] = 0.0
 
             else:
-
-                dydx[i] = -Ry*(x[i]-self.BB_Prof[5])/(Rx**2.0) * 1/np.sqrt(np.abs(1.0 - ((x[i] - self.BB_Prof[5])/Rx)**2.0))
+                dydx[i] = (
+                    -Ry
+                    * (x[i] - self.BB_Prof[5])
+                    / (Rx**2.0)
+                    * 1
+                    / np.sqrt(np.abs(1.0 - ((x[i] - self.BB_Prof[5]) / Rx) ** 2.0))
+                )
 
         return dydx
 
-
-
-    def SB_profile(self,z):
+    def SB_profile(self, z):
         """Return the x position of trailing edge of SB.
 
         Args:
@@ -1320,10 +1454,30 @@ class Hull_Parameterization:
         Returns:
             _type_: x position of trailing edge of SB.
         """
-        if z >= self.Hsb*self.WL*self.HSBOA:
-            return self.SB_Prof[5] + np.sqrt(np.abs(1.0 - ((z-self.Hsb*self.WL*self.HSBOA)/self.SB_Prof[1])**2.0))*self.SB_Prof[4]
+        if z >= self.Hsb * self.WL * self.HSBOA:
+            return (
+                self.SB_Prof[5]
+                + np.sqrt(
+                    np.abs(
+                        1.0
+                        - ((z - self.Hsb * self.WL * self.HSBOA) / self.SB_Prof[1])
+                        ** 2.0
+                    )
+                )
+                * self.SB_Prof[4]
+            )
         else:
-            return self.SB_Prof[5] + np.sqrt(np.abs(1.0 - ((z-self.Hsb*self.WL*self.HSBOA)/self.SB_Prof[2])**2.0))*self.SB_Prof[4]
+            return (
+                self.SB_Prof[5]
+                + np.sqrt(
+                    np.abs(
+                        1.0
+                        - ((z - self.Hsb * self.WL * self.HSBOA) / self.SB_Prof[2])
+                        ** 2.0
+                    )
+                )
+                * self.SB_Prof[4]
+            )
 
     def halfBeam_SB(self, z, x):
         """Return the half breadth of the BB at height z and position x.
@@ -1336,27 +1490,31 @@ class Hull_Parameterization:
             np.ndarray: The half breadth of the BB at height z and position x.
                 Has same size as x.
         """
-        if z >= self.Hsb*self.WL*self.HSBOA:
+        if z >= self.Hsb * self.WL * self.HSBOA:
             Rz = self.SB_Prof[1]
         else:
             Rz = self.SB_Prof[2]
 
-        Ry = np.sqrt(np.abs(1.0 - ((z - self.Hsb*self.WL*self.HSBOA)/Rz)**2.0))*self.SB_Prof[3]
+        Ry = (
+            np.sqrt(np.abs(1.0 - ((z - self.Hsb * self.WL * self.HSBOA) / Rz) ** 2.0))
+            * self.SB_Prof[3]
+        )
 
         Rx = self.SB_profile(z) - self.SB_Prof[5]
 
         y = np.zeros((len(x),))
 
-        for i in range(0,len(x)):
-
+        for i in range(0, len(x)):
             if x[i] <= self.SB_Prof[5]:
                 y[i] = Ry
             else:
-                y[i] = np.sqrt(np.abs(1.0 - ((x[i] - self.SB_Prof[5])/Rx)**2.0))*Ry
+                y[i] = (
+                    np.sqrt(np.abs(1.0 - ((x[i] - self.SB_Prof[5]) / Rx) ** 2.0)) * Ry
+                )
 
         return y
 
-    def SB_dydx(self,z,x):
+    def SB_dydx(self, z, x):
         """Compute the dy/dx slope of the bulbous bow at height z and
         position x.
 
@@ -1368,32 +1526,36 @@ class Hull_Parameterization:
             _type_: The dy/dx slope of the bulbous bow at height z and position x.
                 Has same size as x.
         """
-        if z >= self.Hsb*self.WL*self.HSBOA:
+        if z >= self.Hsb * self.WL * self.HSBOA:
             Rz = self.SB_Prof[1]
         else:
             Rz = self.SB_Prof[2]
 
-        Ry = np.sqrt(np.abs(1.0 - ((z - self.Hsb*self.WL*self.HSBOA)/Rz)**2.0))*self.SB_Prof[3]
+        Ry = (
+            np.sqrt(np.abs(1.0 - ((z - self.Hsb * self.WL * self.HSBOA) / Rz) ** 2.0))
+            * self.SB_Prof[3]
+        )
 
         Rx = self.SB_profile(z) - self.SB_Prof[5]
 
         dydx = np.zeros((len(x),))
 
         for i in range(0, len(x)):
-
             if x[i] <= self.SB_Prof[5]:
-                dydx[i] =  0.0
+                dydx[i] = 0.0
 
             else:
-                dydx[i] = -Ry*(x[i]-self.SB_Prof[5])/(Rx**2.0) * 1/np.sqrt(np.abs(1.0 - ((x[i] - self.SB_Prof[5])/Rx)**2.0))
+                dydx[i] = (
+                    -Ry
+                    * (x[i] - self.SB_Prof[5])
+                    / (Rx**2.0)
+                    * 1
+                    / np.sqrt(np.abs(1.0 - ((x[i] - self.SB_Prof[5]) / Rx) ** 2.0))
+                )
 
         return dydx
 
-
-
-
-
-    def gen_waterline_bow_BB(self, z, NUM_POINTS = 100, X = [0,1], bit_spaceOrGrid = 1):
+    def gen_waterline_bow_BB(self, z, NUM_POINTS=100, X=[0, 1], bit_spaceOrGrid=1):
         """Return a set of [X,Y] points that accounts for the shape and fillet
         radius of a bulbous bow on the bow profile.
 
@@ -1409,8 +1571,10 @@ class Hull_Parameterization:
         """
         a = NUM_POINTS
         if z >= self.WL:
-            #If z is above the Ship's waterline, then the bulbous bow does not exist in that section
-            return self.gen_waterline_bow(z, NUM_POINTS = a, X = X, bit_spaceOrGrid = bit_spaceOrGrid)
+            # If z is above the Ship's waterline, then the bulbous bow does not exist in that section
+            return self.gen_waterline_bow(
+                z, NUM_POINTS=a, X=X, bit_spaceOrGrid=bit_spaceOrGrid
+            )
 
         else:
             PROF = self.solve_waterline_bow(z)
@@ -1419,77 +1583,93 @@ class Hull_Parameterization:
 
             x2 = self.delta_bow(z)
 
-
-            #Set x based on spacing or grid
+            # Set x based on spacing or grid
             if bit_spaceOrGrid:
-
-                x = np.linspace(x1,x2,NUM_POINTS)
-                XY = np.zeros((len(x),2))
+                x = np.linspace(x1, x2, NUM_POINTS)
+                XY = np.zeros((len(x), 2))
 
             else:
                 x = [i for i in X if (i > x1 and i <= x2)]
 
-                x = np.concatenate(([x1],x))
+                x = np.concatenate(([x1], x))
 
-                XY = np.zeros((len(x),2))
+                XY = np.zeros((len(x), 2))
 
-
-
-            #Find most likely point where BB intersects Bow Curve
+            # Find most likely point where BB intersects Bow Curve
             A = PROF.copy()
 
             A[3] = A[3] - self.halfBeam_BB(z, [self.BB_Prof[5]])
 
-
             ROOTS = np.roots(A)
 
-            x_int = np.amin(np.real([i for i in ROOTS if (i >= self.bow_profile(z) and i >= self.BB_profile(z))])) #Need to call np.real as there will be instances where 2nd and 3rd roots of PROF will be imaginary. calling np.real to clean this up
+            x_int = np.amin(
+                np.real(
+                    [
+                        i
+                        for i in ROOTS
+                        if (i >= self.bow_profile(z) and i >= self.BB_profile(z))
+                    ]
+                )
+            )  # Need to call np.real as there will be instances where 2nd and 3rd roots of PROF will be imaginary. calling np.real to clean this up
 
-
-            '''
+            """
             #ind start and ending points for Rbb -> not quite a circular radius, but it is a cubic fillet (sorta counts)
              Xrad are the points forward and aft where fillet will start.
             Xrad[0] is Rbb fraction of distance between interesect and fwd profie of BB at z
             Xrad[1] is Rbb fraction of the distance bewtween the insect and delta_bow(z)
-            '''
-            dx = abs(np.amin([x_int - self.BB_profile(z), self.delta_bow(z) - x_int])) #Distance over which fillet occurs # Need to add abs to avoid dumb errors
+            """
+            dx = abs(
+                np.amin([x_int - self.BB_profile(z), self.delta_bow(z) - x_int])
+            )  # Distance over which fillet occurs # Need to add abs to avoid dumb errors
 
-
-
-            Xrad = [(x_int - dx*self.Rbb/2.0), (x_int + dx*self.Rbb/2.0)]
-
+            Xrad = [(x_int - dx * self.Rbb / 2.0), (x_int + dx * self.Rbb / 2.0)]
 
             # going to build quartic systems of Eqn to solve. only tricky thing: what is dydx at Xrad[0]
 
-            Yrad = [self.halfBeam_BB(z, [Xrad[0]])[0], self.halfBeam_Bow([Xrad[1]], PROF)[0]]
+            Yrad = [
+                self.halfBeam_BB(z, [Xrad[0]])[0],
+                self.halfBeam_Bow([Xrad[1]], PROF)[0],
+            ]
             dydx = [self.BB_dydx(z, [Xrad[0]])[0], self.bow_dydx([Xrad[1]], PROF)[0]]
 
-
-            '''
+            """
             Rbb is quartic systems of eqns
             5 boundary conditions:
                 both (Xrad, Yrad) on fillet curve
                 both dydx are matched at ends
                 dydx halfway between BCs is mean of BC dydx and avg slope of BC end points
 
-            '''
+            """
 
-            #dydx_mean = (2.0*((Yrad[1] - Yrad[0])/(Xrad[1]-Xrad[0])) + dydx[0] + dydx[1])/4.0
+            # dydx_mean = (2.0*((Yrad[1] - Yrad[0])/(Xrad[1]-Xrad[0])) + dydx[0] + dydx[1])/4.0
 
-            Arad = np.array([[Xrad[0]**4.0,     Xrad[0]**3.0,   Xrad[0]**2.0,       Xrad[0],    1.0],
-                             [Xrad[1]**4.0,     Xrad[1]**3.0,   Xrad[1]**2.0,       Xrad[1],    1.0],
-                             [4.0*Xrad[0]**3.0, 3.0*Xrad[0]**2.0, 2.0*Xrad[0],      1.0,        0.0],
-                             [4.0*Xrad[1]**3.0, 3.0*Xrad[1]**2.0, 2.0*Xrad[1],      1.0,        0.0],
-                             [12.0*Xrad[0]**2.0, 6.0*Xrad[0]**2.0, 2.0,             0.0,        0.0]])
+            Arad = np.array(
+                [
+                    [Xrad[0] ** 4.0, Xrad[0] ** 3.0, Xrad[0] ** 2.0, Xrad[0], 1.0],
+                    [Xrad[1] ** 4.0, Xrad[1] ** 3.0, Xrad[1] ** 2.0, Xrad[1], 1.0],
+                    [
+                        4.0 * Xrad[0] ** 3.0,
+                        3.0 * Xrad[0] ** 2.0,
+                        2.0 * Xrad[0],
+                        1.0,
+                        0.0,
+                    ],
+                    [
+                        4.0 * Xrad[1] ** 3.0,
+                        3.0 * Xrad[1] ** 2.0,
+                        2.0 * Xrad[1],
+                        1.0,
+                        0.0,
+                    ],
+                    [12.0 * Xrad[0] ** 2.0, 6.0 * Xrad[0] ** 2.0, 2.0, 0.0, 0.0],
+                ]
+            )
 
+            brad = np.array([Yrad[0], Yrad[1], dydx[0], dydx[1], 0.0])  # dydx_mean])
 
+            PROFrad = np.linalg.solve(Arad, brad)
 
-            brad = np.array([Yrad[0], Yrad[1], dydx[0], dydx[1], 0.0]) #dydx_mean])
-
-
-            PROFrad = np.linalg.solve(Arad,brad)
-
-            XY[0,:] = [x1, 0.0]
+            XY[0, :] = [x1, 0.0]
 
             xbb = [i for i in x if (i > x1 and i <= Xrad[0])]
 
@@ -1501,22 +1681,24 @@ class Hull_Parameterization:
 
             ybbrad = np.zeros((len(xbbrad),))
 
-            for i in range(0,len(xbbrad)):
-                ybbrad[i] = PROFrad[0]*xbbrad[i]**4.0 + PROFrad[1]*xbbrad[i]**3.0 + PROFrad[2]*xbbrad[i]**2.0 + PROFrad[3]*xbbrad[i] + PROFrad[4]
+            for i in range(0, len(xbbrad)):
+                ybbrad[i] = (
+                    PROFrad[0] * xbbrad[i] ** 4.0
+                    + PROFrad[1] * xbbrad[i] ** 3.0
+                    + PROFrad[2] * xbbrad[i] ** 2.0
+                    + PROFrad[3] * xbbrad[i]
+                    + PROFrad[4]
+                )
 
             ybow = self.halfBeam_Bow(xbow, PROF)
 
+            XY[1:, 0] = x[1:]
 
-
-            XY[1:,0] = x[1:]
-
-            XY[1:,1] = np.concatenate((ybb,ybbrad,ybow))
-
+            XY[1:, 1] = np.concatenate((ybb, ybbrad, ybow))
 
             return XY
 
-
-    def gen_waterline_stern_SB(self, z, NUM_POINTS = 100, X = [0,1], bit_spaceOrGrid = 1):
+    def gen_waterline_stern_SB(self, z, NUM_POINTS=100, X=[0, 1], bit_spaceOrGrid=1):
         """Return a set of [X,Y] points that accounts for the shape and fillet
         radius of a bulbous bow on the bow profile.
 
@@ -1532,29 +1714,34 @@ class Hull_Parameterization:
                 i.e. two column vectors.
         """
         a = NUM_POINTS
-        if z >= self.WL*self.HSBOA:        #If z is above the Ship's waterline, then the bulbous bow does not exist in that section
-            return self.gen_waterline_stern(z, NUM_POINTS = a, X=X, bit_spaceOrGrid=bit_spaceOrGrid)
+        if (
+            z >= self.WL * self.HSBOA
+        ):  # If z is above the Ship's waterline, then the bulbous bow does not exist in that section
+            return self.gen_waterline_stern(
+                z, NUM_POINTS=a, X=X, bit_spaceOrGrid=bit_spaceOrGrid
+            )
 
         else:
-            #Set up half beam for stern at z
+            # Set up half beam for stern at z
             PROF = self.solve_waterline_stern(z)
 
             x1 = self.delta_stern(z)
 
             x2 = self.SB_profile(z)
 
-            #Create x distribution
+            # Create x distribution
             if bit_spaceOrGrid:
-                x = np.linspace(x1,x2,NUM_POINTS)
-                XY = np.zeros((len(x),2))
+                x = np.linspace(x1, x2, NUM_POINTS)
+                XY = np.zeros((len(x), 2))
             else:
                 x = [i for i in X if (i >= x1 and i < x2)]
-                x = np.concatenate((x,[x2]))
-                XY = np.zeros((len(x),2))
-
+                x = np.concatenate((x, [x2]))
+                XY = np.zeros((len(x), 2))
 
             # This y intersect is most likely place that y in
-            y_int = self.halfBeam_SB(z, [self.SB_Prof[5]])[0] #ad the [0] so that y_int is interpretted as a float
+            y_int = self.halfBeam_SB(z, [self.SB_Prof[5]])[
+                0
+            ]  # ad the [0] so that y_int is interpretted as a float
 
             if y_int >= self.halfBeam_Stern([self.delta_stern(z)], PROF):
                 y_int = self.halfBeam_Stern([self.delta_stern(z)], PROF)
@@ -1562,66 +1749,87 @@ class Hull_Parameterization:
 
             else:
                 if PROF[0]:
-                    x_int = PROF[4]*np.sqrt(abs(1 - ((y_int-PROF[7])/PROF[5])**2.0)) + PROF[6]
+                    x_int = (
+                        PROF[4] * np.sqrt(abs(1 - ((y_int - PROF[7]) / PROF[5]) ** 2.0))
+                        + PROF[6]
+                    )
                 else:
-                    ROOTS = np.roots([PROF[1], PROF[2], PROF[3]-y_int])
+                    ROOTS = np.roots([PROF[1], PROF[2], PROF[3] - y_int])
 
-                    x_int = np.amax(np.real([i for i in ROOTS if (i >= self.delta_stern(z))]))
+                    x_int = np.amax(
+                        np.real([i for i in ROOTS if (i >= self.delta_stern(z))])
+                    )
 
+            # print(x_int)
 
-            #print(x_int)
+            dx = abs(
+                min([x_int - self.delta_stern(z), self.SB_profile(z) - x_int])
+            )  # Distance over which fillet occurs
 
-            dx = abs(min([x_int - self.delta_stern(z), self.SB_profile(z) - x_int])) #Distance over which fillet occurs
-
-            Xrad = [(x_int - dx*self.Rsb/2.0), ((x_int + dx*self.Rsb/2.0))]
-
+            Xrad = [(x_int - dx * self.Rsb / 2.0), (x_int + dx * self.Rsb / 2.0)]
 
             # Parabolic Radius
 
-            Yrad = [self.halfBeam_Stern([Xrad[0]], PROF)[0], self.halfBeam_SB(z, [Xrad[1]])[0]]
+            Yrad = [
+                self.halfBeam_Stern([Xrad[0]], PROF)[0],
+                self.halfBeam_SB(z, [Xrad[1]])[0],
+            ]
 
             dydx = [self.stern_dydx([Xrad[0]], PROF)[0], self.SB_dydx(z, [Xrad[1]])[0]]
 
-
-
-            Arad = np.array([[Xrad[0]**4.0,     Xrad[0]**3.0,   Xrad[0]**2.0,   Xrad[0],    1.0],
-                             [Xrad[1]**4.0,     Xrad[1]**3.0,   Xrad[1]**2.0,   Xrad[1],    1.0],
-                             [4.0*Xrad[0]**3.0, 3.0*Xrad[0]**2.0, 2.0*Xrad[0],    1.0,        0.0],
-                             [4.0*Xrad[1]**3.0, 3.0*Xrad[1]**2.0, 2.0*Xrad[1],    1.0,        0.0],
-                             [12.0*Xrad[1]**2.0, 6.0*Xrad[1]**2.0, 2.0,             0.0,        0.0]])
-
-
+            Arad = np.array(
+                [
+                    [Xrad[0] ** 4.0, Xrad[0] ** 3.0, Xrad[0] ** 2.0, Xrad[0], 1.0],
+                    [Xrad[1] ** 4.0, Xrad[1] ** 3.0, Xrad[1] ** 2.0, Xrad[1], 1.0],
+                    [
+                        4.0 * Xrad[0] ** 3.0,
+                        3.0 * Xrad[0] ** 2.0,
+                        2.0 * Xrad[0],
+                        1.0,
+                        0.0,
+                    ],
+                    [
+                        4.0 * Xrad[1] ** 3.0,
+                        3.0 * Xrad[1] ** 2.0,
+                        2.0 * Xrad[1],
+                        1.0,
+                        0.0,
+                    ],
+                    [12.0 * Xrad[1] ** 2.0, 6.0 * Xrad[1] ** 2.0, 2.0, 0.0, 0.0],
+                ]
+            )
 
             brad = np.array([Yrad[0], Yrad[1], dydx[0], dydx[1], 0.0])
 
-
-            PROFrad = np.linalg.solve(Arad,brad)
-
+            PROFrad = np.linalg.solve(Arad, brad)
 
             xstern = [i for i in x[:-1] if (i >= x1 and i <= Xrad[0])]
 
             xsbrad = [i for i in x[:-1] if (i > Xrad[0] and i < Xrad[1])]
 
-
             xsb = [i for i in x[:-1] if (i >= Xrad[1] and i < x2)]
 
             ystern = self.halfBeam_Stern(xstern, PROF)
 
-
             ysbrad = np.zeros((len(xsbrad),))
 
-            for i in range(0,len(xsbrad)):
-
-                ysbrad[i] = PROFrad[0]*xsbrad[i]**4.0 + PROFrad[1]*xsbrad[i]**3.0 + PROFrad[2]*xsbrad[i]**2.0 + PROFrad[3]*xsbrad[i] + PROFrad[4]
+            for i in range(0, len(xsbrad)):
+                ysbrad[i] = (
+                    PROFrad[0] * xsbrad[i] ** 4.0
+                    + PROFrad[1] * xsbrad[i] ** 3.0
+                    + PROFrad[2] * xsbrad[i] ** 2.0
+                    + PROFrad[3] * xsbrad[i]
+                    + PROFrad[4]
+                )
 
             ysb = self.halfBeam_SB(z, xsb)
 
-            XY[0:-1,0] = x[0:-1]
+            XY[0:-1, 0] = x[0:-1]
 
-            XY[0:-1,1] = np.concatenate((ystern,ysbrad,ysb))
+            XY[0:-1, 1] = np.concatenate((ystern, ysbrad, ysb))
 
             # Make sure XY[-1] is zero to create a closed mesh
-            XY[-1] = [x2,0.0]
+            XY[-1] = [x2, 0.0]
 
             return XY
 
@@ -1629,23 +1837,19 @@ class Hull_Parameterization:
         """Plot intersection points in blue. Plot chine pt in green.
         Plot Center of Rc and Rk in red. half Beam(z) in black.
         """
-        z1 = np.linspace(0.0, self.WL, num = 200)
-        z2 = np.linspace(0.0, self.WL*self.HSBOA, num = 200)
-        x = np.zeros((200,2))
-        for i in range(0,len(z1)):
-            x[i,0] = self.BB_profile(z1[i])
-            x[i,1] = self.SB_profile(z2[i]) - self.Ls-self.Lm
+        z1 = np.linspace(0.0, self.WL, num=200)
+        z2 = np.linspace(0.0, self.WL * self.HSBOA, num=200)
+        x = np.zeros((200, 2))
+        for i in range(0, len(z1)):
+            x[i, 0] = self.BB_profile(z1[i])
+            x[i, 1] = self.SB_profile(z2[i]) - self.Ls - self.Lm
 
+        fig2, ax2 = plt.subplots()
+        ax2.axis("equal")
+        # plt.axis([0,10,0,10])
 
-        fig2,ax2 = plt.subplots()
-        ax2.axis('equal')
-        #plt.axis([0,10,0,10])
-
-        ax2.plot(x[:,0], z1, '-', color = 'blue')
-        ax2.plot(x[:,1], z2,'-' ,color = 'red')
-
-
-
+        ax2.plot(x[:, 0], z1, "-", color="blue")
+        ax2.plot(x[:, 1], z2, "-", color="red")
 
     def BulbformConstraints(self):
         """Bulbform constraints.
@@ -1672,82 +1876,96 @@ class Hull_Parameterization:
 
         if self.bit_BB:
             if self.Beta == 0.0:
-                C[0:3] = np.array([-1.0,
-                                   -1.0,
-                                   self.BB_Prof[3] - self.halfBeam_MidBody(self.BB_Prof[2])])
+                C[0:3] = np.array(
+                    [
+                        -1.0,
+                        -1.0,
+                        self.BB_Prof[3] - self.halfBeam_MidBody(self.BB_Prof[2]),
+                    ]
+                )
 
             elif self.Rk > 0.0:
-                C[0:3] = np.array([self.BB_Prof[2] - self.Rk,
-                                   self.BB_Prof[3] -self.Rk,
-                                   self.BB_Prof[3] - self.halfBeam_MidBody(self.BB_Prof[2])])
+                C[0:3] = np.array(
+                    [
+                        self.BB_Prof[2] - self.Rk,
+                        self.BB_Prof[3] - self.Rk,
+                        self.BB_Prof[3] - self.halfBeam_MidBody(self.BB_Prof[2]),
+                    ]
+                )
 
             else:
-                C[0:3] = np.array([1.0,1.0,1.0])
+                C[0:3] = np.array([1.0, 1.0, 1.0])
 
             if self.DELTA_BOW[0] == 0.0:
                 Zv = -1.0
             else:
-                Zv = -self.DELTA_BOW[1]/ (2.0*self.DELTA_BOW[0])
+                Zv = -self.DELTA_BOW[1] / (2.0 * self.DELTA_BOW[0])
 
-            if Zv >=0.0 and Zv <= self.WL:
-                vert_delta_bow = (self.delta_bow(Zv) - self.BB_Prof[5])
+            if Zv >= 0.0 and Zv <= self.WL:
+                vert_delta_bow = self.delta_bow(Zv) - self.BB_Prof[5]
             else:
                 vert_delta_bow = -1.0
 
-            C[3:6] = np.array([self.BB_Prof[5] - self.delta_bow(0.0),
-                               self.BB_Prof[5] - self.delta_bow(self.WL),
-                                vert_delta_bow])
+            C[3:6] = np.array(
+                [
+                    self.BB_Prof[5] - self.delta_bow(0.0),
+                    self.BB_Prof[5] - self.delta_bow(self.WL),
+                    vert_delta_bow,
+                ]
+            )
 
         else:
-            C[0:6] = np.array([-1.0,-1.0,-1.0, -1.0, -1.0, -1.0])
-
-
+            C[0:6] = np.array([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0])
 
         if self.bit_SB:
             if self.Beta == 0.0:
-                C[6:10] = np.array([-1.0,
-                                   -1.0,
-                                   self.SB_Prof[3] - self.halfBeam_MidBody(self.SB_Prof[2]),
-                                   self.WL*self.HSBOA - self.SK[1]])
+                C[6:10] = np.array(
+                    [
+                        -1.0,
+                        -1.0,
+                        self.SB_Prof[3] - self.halfBeam_MidBody(self.SB_Prof[2]),
+                        self.WL * self.HSBOA - self.SK[1],
+                    ]
+                )
 
             elif self.Rk > 0.0:
-                C[6:10] = np.array([self.SB_Prof[2] - self.Rk,
-                                   self.SB_Prof[3] -self.Rk,
-                                   self.SB_Prof[3] - self.halfBeam_MidBody(self.SB_Prof[2]),
-                                   self.WL*self.HSBOA - self.SK[1]])
+                C[6:10] = np.array(
+                    [
+                        self.SB_Prof[2] - self.Rk,
+                        self.SB_Prof[3] - self.Rk,
+                        self.SB_Prof[3] - self.halfBeam_MidBody(self.SB_Prof[2]),
+                        self.WL * self.HSBOA - self.SK[1],
+                    ]
+                )
 
             else:
-                C[6:10] = np.array([1.0,1.0,1.0,1.0])
+                C[6:10] = np.array([1.0, 1.0, 1.0, 1.0])
 
             if self.DELTA_STERN[0] == 0.0:
                 Zv = -1.0
             else:
-                Zv = -self.DELTA_STERN[1]/ (2.0*self.DELTA_STERN[0])
+                Zv = -self.DELTA_STERN[1] / (2.0 * self.DELTA_STERN[0])
 
-            if Zv >=0.0 and Zv <= self.WL*self.HSBOA:
-                vert_delta_stern = (self.delta_stern(Zv) - self.SB_Prof[5])
+            if Zv >= 0.0 and Zv <= self.WL * self.HSBOA:
+                vert_delta_stern = self.delta_stern(Zv) - self.SB_Prof[5]
             else:
                 vert_delta_stern = -1.0
 
-            C[10:13] = np.array([self.delta_stern(0.0) - self.SB_Prof[5],
-                                self.delta_stern(self.WL*self.HSBOA) - self.SB_Prof[5],
-                                vert_delta_stern])
+            C[10:13] = np.array(
+                [
+                    self.delta_stern(0.0) - self.SB_Prof[5],
+                    self.delta_stern(self.WL * self.HSBOA) - self.SB_Prof[5],
+                    vert_delta_stern,
+                ]
+            )
 
-
-        #If no Stern Bulb, then no constraint violations
+        # If no Stern Bulb, then no constraint violations
         else:
-            C[6:13] = np.array([-1.0,-1.0,-1.0, -1.0, -1.0, -1.0, -1.0])
-
-
-
-
-
-
+            C[6:13] = np.array([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0])
 
         return C
 
-
-    '''
+    """
     =====================================================================
                     Section 6: Mesh Generatation
     ======================================================================
@@ -1756,8 +1974,11 @@ class Hull_Parameterization:
     as an STL
 
 
-    '''
-    def gen_MeshGridPointCloud(self, NUM_WL = 51, PointsPerLOA = 501, Z = [], X = [], bit_GridOrList = 1):
+    """
+
+    def gen_MeshGridPointCloud(
+        self, NUM_WL=51, PointsPerLOA=501, Z=[], X=[], bit_GridOrList=1
+    ):
         """Generate each waterline with even x and z spacing in a grid.
         Z and X assignments supercede NUM_WL and PointsPerLOA Assignments.
 
@@ -1772,23 +1993,23 @@ class Hull_Parameterization:
             _type_: _description_
         """
         if len(Z) == 0:
-            Z = np.linspace(0.0001*self.Dd,self.Dd, NUM_WL)
+            Z = np.linspace(0.0001 * self.Dd, self.Dd, NUM_WL)
 
         if len(X) == 0:
-            X = np.linspace(-self.LOA*0.5,1.5*self.LOA, 2*PointsPerLOA - 1)
+            X = np.linspace(-self.LOA * 0.5, 1.5 * self.LOA, 2 * PointsPerLOA - 1)
 
         Points = []
 
         for i in Z:
-            pts = self.gen_MeshGridWL(X,i)
+            pts = self.gen_MeshGridWL(X, i)
 
             Points.append(pts)
 
-        #returns the points if user wants a waterline structured array of points
+        # returns the points if user wants a waterline structured array of points
         if bit_GridOrList:
             return Points
 
-        #returns a list of points in shape (N,3) if a list is preferred
+        # returns a list of points in shape (N,3) if a list is preferred
         else:
             Cloud = []
             for i in Points:
@@ -1798,29 +2019,27 @@ class Hull_Parameterization:
             return Cloud
 
     def gen_MeshGridWL(self, X, z):
-
         WL = []
 
         if z == 0.0:
             if self.bit_BB:
                 bow_start = self.BB_Prof[5]
             else:
-                bow_start = self.Kappa_BOW*self.Lb
+                bow_start = self.Kappa_BOW * self.Lb
 
             if self.bit_SB:
                 stern_end = self.SB_Prof[5]
             else:
-                stern_end = self.Lm + self.Lb + self.Kappa_STERN*self.Ls
+                stern_end = self.Lm + self.Lb + self.Kappa_STERN * self.Ls
 
-
-            WL.append([bow_start,0.0,0.0])
+            WL.append([bow_start, 0.0, 0.0])
 
             x = [i for i in X if (i > bow_start and i < stern_end)]
 
             for i in x:
-                WL.append([i,0.0,0.0])
+                WL.append([i, 0.0, 0.0])
 
-            WL.append([stern_end,0.0,0.0])
+            WL.append([stern_end, 0.0, 0.0])
 
         else:
             # Now generate the remaining watelines
@@ -1831,27 +2050,32 @@ class Hull_Parameterization:
             else:
                 BOW = self.gen_waterline_bow(z, X=X, bit_spaceOrGrid=0)
 
-            for i in range(0,len(BOW)):
-                WL.append([BOW[i,0], BOW[i,1], z])
+            for i in range(0, len(BOW)):
+                WL.append([BOW[i, 0], BOW[i, 1], z])
 
-            X_mid = [i for i in X if (i >= self.delta_bow(z) and i < self.delta_stern(z))]
+            X_mid = [
+                i for i in X if (i >= self.delta_bow(z) and i < self.delta_stern(z))
+            ]
             Y_mid = self.halfBeam_MidBody(z)
 
-            for i in range(0,len(X_mid)):
+            for i in range(0, len(X_mid)):
                 WL.append([X_mid[i], Y_mid, z])
 
             if self.bit_SB:
-                STERN = self.gen_waterline_stern_SB(z, NUM_POINTS = 0, X=X, bit_spaceOrGrid=0)
+                STERN = self.gen_waterline_stern_SB(
+                    z, NUM_POINTS=0, X=X, bit_spaceOrGrid=0
+                )
             else:
-                STERN = self.gen_waterline_stern(z, NUM_POINTS = 0, X=X, bit_spaceOrGrid=0)
+                STERN = self.gen_waterline_stern(
+                    z, NUM_POINTS=0, X=X, bit_spaceOrGrid=0
+                )
 
-            for i in range(0,len(STERN)):
-                WL.append([STERN[i,0], STERN[i,1], z])
+            for i in range(0, len(STERN)):
+                WL.append([STERN[i, 0], STERN[i, 1], z])
 
         return np.array(WL)
 
-
-    def gen_pointCloud(self, NUM_WL = 50, PointsPerWL = 300, bit_GridOrList = 0, Z = []):
+    def gen_pointCloud(self, NUM_WL=50, PointsPerWL=300, bit_GridOrList=0, Z=[]):
         """Generate a point cloud [[xyz]0, ..., [xyz]N] of the hull.
 
         Args:
@@ -1875,7 +2099,6 @@ class Hull_Parameterization:
         """
         print(Z.shape)
 
-
         if len(Z) == 0:
             z = self.gen_WLHeights(NUM_WL)
         else:
@@ -1883,18 +2106,16 @@ class Hull_Parameterization:
             NUM_WL = len(z)
 
         if bit_GridOrList:
-            PC = np.zeros((NUM_WL, PointsPerWL,3))
+            PC = np.zeros((NUM_WL, PointsPerWL, 3))
 
-
-            for i in range(0,len(z)):
-
+            for i in range(0, len(z)):
                 PC[i] = self.gen_WLPoints(z[i], PointsPerWL)
 
         else:
-            PC = np.zeros((NUM_WL*PointsPerWL,3))
-            for i in range(0,len(z)):
+            PC = np.zeros((NUM_WL * PointsPerWL, 3))
+            for i in range(0, len(z)):
                 WL = self.gen_WLPoints(z[i], PointsPerWL)
-                PC[PointsPerWL*i:PointsPerWL*(i+1)] = np.array(WL)
+                PC[PointsPerWL * i : PointsPerWL * (i + 1)] = np.array(WL)
 
         return PC
 
@@ -1911,14 +2132,24 @@ class Hull_Parameterization:
         """
         z = np.zeros((NUM_WL,))
 
-        z[0:7] = np.array([self.BK[1], self.SK[1], self.WL, self.Hbb*self.WL, self.HSBOA*self.WL, self.Hsb*self.WL*self.HSBOA, 0.001*self.Dd])
+        z[0:7] = np.array(
+            [
+                self.BK[1],
+                self.SK[1],
+                self.WL,
+                self.Hbb * self.WL,
+                self.HSBOA * self.WL,
+                self.Hsb * self.WL * self.HSBOA,
+                0.001 * self.Dd,
+            ]
+        )
         z[7:] = np.linspace(0.0, self.Dd, NUM_WL - 7)
 
         z = np.sort(z)
 
         return z
 
-    def gen_WLPoints(self, z, PointsPerWL = 300):
+    def gen_WLPoints(self, z, PointsPerWL=300):
         """Generate the starboard waterline half breadths.
         Set up baseline first between deltabow and delta stern.
 
@@ -1935,17 +2166,15 @@ class Hull_Parameterization:
             if self.bit_BB:
                 bow_start = self.BB_Prof[5]
             else:
-                bow_start = self.Kappa_BOW*self.Lb
+                bow_start = self.Kappa_BOW * self.Lb
 
             if self.bit_SB:
                 stern_end = self.SB_Prof[5]
             else:
-                stern_end = self.Lm + self.Lb + self.Kappa_STERN*self.Ls
+                stern_end = self.Lm + self.Lb + self.Kappa_STERN * self.Ls
 
-
-
-            x =  np.linspace(bow_start, stern_end, PointsPerWL)
-            for i in range(0,PointsPerWL):
+            x = np.linspace(bow_start, stern_end, PointsPerWL)
+            for i in range(0, PointsPerWL):
                 WL.append([x[i], 0.0, 0.0])
 
         else:
@@ -1955,19 +2184,21 @@ class Hull_Parameterization:
             else:
                 bow_start = self.bow_profile(z)
 
-            if self.bit_SB and z <= self.HSBOA*self.WL:
-
-                stern_end = max([self.SB_profile(z),self.stern_profile(z)])
+            if self.bit_SB and z <= self.HSBOA * self.WL:
+                stern_end = max([self.SB_profile(z), self.stern_profile(z)])
             else:
                 stern_end = self.stern_profile(z)
 
-
             WL_LOA = stern_end - bow_start
 
-            #print([z,WL_LOA,stern_end, bow_start])
+            # print([z,WL_LOA,stern_end, bow_start])
 
-            pts_bow = abs(int((self.delta_bow(z) - bow_start)/WL_LOA * PointsPerWL)) + 1
-            pts_stern = abs(int((stern_end - self.delta_stern(z))/WL_LOA * PointsPerWL)) + 1
+            pts_bow = (
+                abs(int((self.delta_bow(z) - bow_start) / WL_LOA * PointsPerWL)) + 1
+            )
+            pts_stern = (
+                abs(int((stern_end - self.delta_stern(z)) / WL_LOA * PointsPerWL)) + 1
+            )
 
             if (pts_bow + pts_stern) > PointsPerWL:
                 over = pts_bow + pts_stern - PointsPerWL
@@ -1976,37 +2207,42 @@ class Hull_Parameterization:
             else:
                 pts_mid = PointsPerWL - pts_bow - pts_stern
 
-            #print(self.delta_bow(z) - bow_start)
-            #print([z, pts_bow,pts_mid,pts_stern])
+            # print(self.delta_bow(z) - bow_start)
+            # print([z, pts_bow,pts_mid,pts_stern])
 
             if self.bit_BB:
-                BOW = self.gen_waterline_bow_BB(z, NUM_POINTS = pts_bow)
+                BOW = self.gen_waterline_bow_BB(z, NUM_POINTS=pts_bow)
             else:
-                BOW = self.gen_waterline_bow(z, NUM_POINTS = pts_bow)
+                BOW = self.gen_waterline_bow(z, NUM_POINTS=pts_bow)
 
-            for i in range(0,pts_bow):
-                WL.append([BOW[i,0], BOW[i,1], z])
+            for i in range(0, pts_bow):
+                WL.append([BOW[i, 0], BOW[i, 1], z])
 
-            X_mid = np.linspace(self.delta_bow(z), self.delta_stern(z), pts_mid+2)
+            X_mid = np.linspace(self.delta_bow(z), self.delta_stern(z), pts_mid + 2)
             Y_mid = self.halfBeam_MidBody(z)
 
-            for i in range(0,pts_mid):
-                WL.append([X_mid[1+i], Y_mid, z])
+            for i in range(0, pts_mid):
+                WL.append([X_mid[1 + i], Y_mid, z])
 
             if self.bit_SB:
-                STERN = self.gen_waterline_stern_SB(z, NUM_POINTS = pts_stern)
+                STERN = self.gen_waterline_stern_SB(z, NUM_POINTS=pts_stern)
             else:
-                STERN = self.gen_waterline_stern(z, NUM_POINTS = pts_stern)
+                STERN = self.gen_waterline_stern(z, NUM_POINTS=pts_stern)
 
-            for i in range(0,pts_stern):
-                WL.append([STERN[i,0], STERN[i,1], z])
-
-
+            for i in range(0, pts_stern):
+                WL.append([STERN[i, 0], STERN[i, 1], z])
 
         return np.array(WL)
 
-
-    def gen_stl(self, NUM_WL = 50, PointsPerWL = 300, bit_AddTransom = 1, bit_AddDeckLid = 0, bit_RefineBowAndStern = 0, namepath = 'Hull_Mesh'):
+    def gen_stl(
+        self,
+        NUM_WL=50,
+        PointsPerWL=300,
+        bit_AddTransom=1,
+        bit_AddDeckLid=0,
+        bit_RefineBowAndStern=0,
+        namepath="Hull_Mesh",
+    ):
         """Generate a surface of the mesh by iterating through the points on the waterlines.
 
         Args:
@@ -2020,188 +2256,186 @@ class Hull_Parameterization:
             _type_: _description_
         """
 
-        #compute number of triangles in the mesh
-        #hullTriangles = 2 * (2*PointsPerWL - 2) * (NUM_WL - 1)
-        #numTriangles = hullTriangles
+        # compute number of triangles in the mesh
+        # hullTriangles = 2 * (2*PointsPerWL - 2) * (NUM_WL - 1)
+        # numTriangles = hullTriangles
         transomTriangles = 0
 
-        #Generate WL
+        # Generate WL
         z = np.zeros((NUM_WL,))
 
-        z[0] = 0.0001*self.Dd
-        z[1] = 0.001*self.Dd
+        z[0] = 0.0001 * self.Dd
+        z[1] = 0.001 * self.Dd
         z[2:] = np.linspace(0.0, self.Dd, NUM_WL - 2)
 
         z = np.sort(z)
 
-        x = np.linspace(-self.LOA*0.5,1.5*self.LOA, 2*PointsPerWL - 1)
+        x = np.linspace(-self.LOA * 0.5, 1.5 * self.LOA, 2 * PointsPerWL - 1)
 
         if bit_RefineBowAndStern:
             # Add more points to X in the bow and stern
 
-            x_sub1 = x[0:int(0.75*PointsPerWL)] + 0.5*(x[1] - x[0])
-            x_sub2 = x[-int(0.75*PointsPerWL):] + 0.5*(x[1] - x[0])
+            x_sub1 = x[0 : int(0.75 * PointsPerWL)] + 0.5 * (x[1] - x[0])
+            x_sub2 = x[-int(0.75 * PointsPerWL) :] + 0.5 * (x[1] - x[0])
             x = np.concatenate((x_sub1, x_sub2, x))
             x = np.sort(x)
 
+        # Generate MeshGrid PC
+        pts = self.gen_MeshGridPointCloud(
+            NUM_WL=NUM_WL, PointsPerLOA=PointsPerWL, Z=z, X=x, bit_GridOrList=1
+        )
 
-
-
-        #Generate MeshGrid PC
-        pts = self.gen_MeshGridPointCloud(NUM_WL = NUM_WL, PointsPerLOA = PointsPerWL, Z = z, X = x, bit_GridOrList = 1)
-
-        #start to assemble the triangles into vectors of indices from pts
+        # start to assemble the triangles into vectors of indices from pts
         TriVec = []
 
-        for i in range(0,NUM_WL-1):
+        for i in range(0, NUM_WL - 1):
+            # Find idx where the mesh grids begin to align between two rows returns a zero or 1:
 
-            #Find idx where the mesh grids begin to align between two rows returns a zero or 1:
+            bow = np.argmax([pts[i][0, 0], pts[i + 1][0, 0]])
 
-            bow = np.argmax([pts[i][0,0],pts[i+1][0,0]])
-
-            stern = np.argmin([pts[i][-1,0],pts[i+1][-1,0]])
-
-
+            stern = np.argmin([pts[i][-1, 0], pts[i + 1][-1, 0]])
 
             # Find index where mesh grid lines up and ends between each WL
 
             if bow:
                 idx_WLB1 = 1
-                idx_WLB0 = np.where(pts[i][:,0] == pts[i+1][idx_WLB1,0])[0][0]
+                idx_WLB0 = np.where(pts[i][:, 0] == pts[i + 1][idx_WLB1, 0])[0][0]
             else:
                 idx_WLB0 = 1
-                idx_WLB1 = np.where(pts[i+1][:,0] == pts[i][idx_WLB0,0])[0][0]
+                idx_WLB1 = np.where(pts[i + 1][:, 0] == pts[i][idx_WLB0, 0])[0][0]
 
             if stern:
-                idx_WLS1 = len(pts[i+1]) - 2
-                idx_WLS0 = np.where(pts[i][:,0] == pts[i+1][idx_WLS1,0])[0][0]
+                idx_WLS1 = len(pts[i + 1]) - 2
+                idx_WLS0 = np.where(pts[i][:, 0] == pts[i + 1][idx_WLS1, 0])[0][0]
             else:
                 idx_WLS0 = len(pts[i]) - 2
-                idx_WLS1 = np.where(pts[i+1][:,0] == pts[i][idx_WLS0,0])[0][0]
+                idx_WLS1 = np.where(pts[i + 1][:, 0] == pts[i][idx_WLS0, 0])[0][0]
 
-            #check that these two are the same size:
+            # check that these two are the same size:
 
-            #Build the bow triangles Includes Port assignments
+            # Build the bow triangles Includes Port assignments
 
             if bow:
-                TriVec.append([pts[i+1][idx_WLB1], pts[i][0], pts[i+1][0]])
+                TriVec.append([pts[i + 1][idx_WLB1], pts[i][0], pts[i + 1][0]])
 
-                for j in range(0,idx_WLB0):
-                    TriVec.append([pts[i+1][idx_WLB1], pts[i][j+1], pts[i][j]])
-
-
+                for j in range(0, idx_WLB0):
+                    TriVec.append([pts[i + 1][idx_WLB1], pts[i][j + 1], pts[i][j]])
 
             else:
+                for j in range(0, idx_WLB1):
+                    TriVec.append([pts[i][0], pts[i + 1][j], pts[i + 1][j + 1]])
 
-                for j in range(0,idx_WLB1):
-                    TriVec.append([pts[i][0],pts[i+1][j], pts[i+1][j+1]])
+                TriVec.append([pts[i][0], pts[i + 1][idx_WLB1], pts[i][idx_WLB0]])
 
-                TriVec.append([pts[i][0],pts[i+1][idx_WLB1], pts[i][idx_WLB0]])
+            # Build main part of hull triangles. Port Assignments
+            for j in range(0, idx_WLS1 - idx_WLB1):
+                TriVec.append(
+                    [
+                        pts[i][idx_WLB0 + j],
+                        pts[i + 1][idx_WLB1 + j],
+                        pts[i + 1][idx_WLB1 + j + 1],
+                    ]
+                )
+                TriVec.append(
+                    [
+                        pts[i][idx_WLB0 + j],
+                        pts[i + 1][idx_WLB1 + j + 1],
+                        pts[i][idx_WLB0 + j + 1],
+                    ]
+                )
 
-            #Build main part of hull triangles. Port Assignments
-            for j in range(0, idx_WLS1-idx_WLB1):
-
-                TriVec.append([pts[i][idx_WLB0+j], pts[i+1][idx_WLB1+j], pts[i+1][idx_WLB1+j+1]])
-                TriVec.append([pts[i][idx_WLB0+j], pts[i+1][idx_WLB1+j+1], pts[i][idx_WLB0+j+1]])
-
-            #Build the stern:
+            # Build the stern:
             if stern:
+                for j in range(idx_WLS0, len(pts[i]) - 1):
+                    TriVec.append([pts[i + 1][idx_WLS1], pts[i][j + 1], pts[i][j]])
 
-                for j in range(idx_WLS0,len(pts[i])-1):
-                    TriVec.append([pts[i+1][idx_WLS1],  pts[i][j+1],pts[i][j]])
-
-                TriVec.append([pts[i+1][idx_WLS1], pts[i+1][-1], pts[i][-1]])
+                TriVec.append([pts[i + 1][idx_WLS1], pts[i + 1][-1], pts[i][-1]])
 
             else:
+                TriVec.append([pts[i][idx_WLS0], pts[i + 1][idx_WLS1], pts[i][-1]])
 
-                TriVec.append([pts[i][idx_WLS0], pts[i+1][idx_WLS1], pts[i][-1]])
-
-                for j in range(idx_WLS1, len(pts[i+1])-1):
-                    TriVec.append([pts[i][-1], pts[i+1][j], pts[i+1][j+1]])
-
+                for j in range(idx_WLS1, len(pts[i + 1]) - 1):
+                    TriVec.append([pts[i][-1], pts[i + 1][j], pts[i + 1][j + 1]])
 
         TriVec = np.array(TriVec)
 
-        hullTriangles = 2*len(TriVec)
+        hullTriangles = 2 * len(TriVec)
         numTriangles = hullTriangles
 
-
-
-        #add triangles if there is a transom
+        # add triangles if there is a transom
         if bit_AddTransom:
             wl_above = len([i for i in z if i > self.SK[1]])
 
             z_idx = NUM_WL - wl_above - 1
 
-            transomTriangles = 2*wl_above - 1
+            transomTriangles = 2 * wl_above - 1
 
             numTriangles += transomTriangles
 
-        #Add triangles if there is a deck lid (meaning the ship becomes a closed body)
+        # Add triangles if there is a deck lid (meaning the ship becomes a closed body)
         if bit_AddDeckLid:
-            numTriangles += 2*len(pts[-1]) - 3
-
+            numTriangles += 2 * len(pts[-1]) - 3
 
         HULL = mesh.Mesh(np.zeros(numTriangles, dtype=mesh.Mesh.dtype))
 
-        HULL.vectors[0:len(TriVec)] = np.copy(TriVec)
+        HULL.vectors[0 : len(TriVec)] = np.copy(TriVec)
 
-        TriVec_stbd = np.copy(TriVec[:,::-1])
-        TriVec_stbd[:,:,1] *= -1
-        HULL.vectors[len(TriVec):hullTriangles] = np.copy(TriVec_stbd)
+        TriVec_stbd = np.copy(TriVec[:, ::-1])
+        TriVec_stbd[:, :, 1] *= -1
+        HULL.vectors[len(TriVec) : hullTriangles] = np.copy(TriVec_stbd)
 
         # NowBuild the transom:
         if bit_AddTransom:
+            pts_trans = np.zeros((wl_above + 1, 3))
 
-
-            pts_trans = np.zeros((wl_above+1,3))
-
-            for i in range(0,len(pts_trans)):
-                pts_trans[i] = pts[z_idx+i][-1,:]
-
-
+            for i in range(0, len(pts_trans)):
+                pts_trans[i] = pts[z_idx + i][-1, :]
 
             pts_tranp = np.array(pts_trans)
 
-            pts_tranp[:,1] *= -1.0
+            pts_tranp[:, 1] *= -1.0
 
+            HULL.vectors[hullTriangles] = np.array(
+                [pts_trans[0], pts_trans[1], pts_tranp[1]]
+            )
 
-
-
-            HULL.vectors[hullTriangles] = np.array([pts_trans[0], pts_trans[1], pts_tranp[1]])
-
-            for i in range(1,wl_above):
-                HULL.vectors[hullTriangles + 2*i-1] = np.array([pts_trans[i], pts_trans[i+1], pts_tranp[i]])
-                HULL.vectors[hullTriangles + 2*i] =     np.array([pts_tranp[i], pts_trans[i+1], pts_tranp[i+1]])
-
+            for i in range(1, wl_above):
+                HULL.vectors[hullTriangles + 2 * i - 1] = np.array(
+                    [pts_trans[i], pts_trans[i + 1], pts_tranp[i]]
+                )
+                HULL.vectors[hullTriangles + 2 * i] = np.array(
+                    [pts_tranp[i], pts_trans[i + 1], pts_tranp[i + 1]]
+                )
 
         # Add the deck lid
         if bit_AddDeckLid:
+            # pts_Lids are starboard points on the deck
+            # pts_Lidp are port points on the deck
 
-            #pts_Lids are starboard points on the deck
-            #pts_Lidp are port points on the deck
-
-            pts_Lids = pts[NUM_WL-1]
+            pts_Lids = pts[NUM_WL - 1]
 
             pts_Lidp = np.array(pts_Lids)
-            pts_Lidp[:,1] *= -1.0
+            pts_Lidp[:, 1] *= -1.0
 
             startTriangles = hullTriangles + transomTriangles
 
             # Points are orered so the right hand rule points the lid in positive z
-            HULL.vectors[startTriangles] = np.array([pts_Lids[0], pts_Lidp[1], pts_Lids[1]])
+            HULL.vectors[startTriangles] = np.array(
+                [pts_Lids[0], pts_Lidp[1], pts_Lids[1]]
+            )
 
-            for i in range(1,len(pts_Lids)-1):
-                HULL.vectors[startTriangles + 2*i - 1] = np.array([pts_Lids[i], pts_Lidp[i], pts_Lids[i+1]])
-                HULL.vectors[startTriangles + 2*i] =     np.array([pts_Lids[i+1], pts_Lidp[i],  pts_Lidp[i+1]])
+            for i in range(1, len(pts_Lids) - 1):
+                HULL.vectors[startTriangles + 2 * i - 1] = np.array(
+                    [pts_Lids[i], pts_Lidp[i], pts_Lids[i + 1]]
+                )
+                HULL.vectors[startTriangles + 2 * i] = np.array(
+                    [pts_Lids[i + 1], pts_Lidp[i], pts_Lidp[i + 1]]
+                )
 
-
-        HULL.save(namepath + '.stl')
+        HULL.save(namepath + ".stl")
         return HULL
 
-
-
-    def gen_PC_for_Cw(self, draft, NUM_WL = 51, PointsPerWL = 301):
+    def gen_PC_for_Cw(self, draft, NUM_WL=51, PointsPerWL=301):
         """Generates the Point Grid and the Inputs for the Cw prediction.
 
         This function:
@@ -2218,62 +2452,56 @@ class Hull_Parameterization:
         Returns:
             _type_: _description_
         """
-        Z = np.linspace(0.00000001*self.Dd, draft, NUM_WL)
+        Z = np.linspace(0.00000001 * self.Dd, draft, NUM_WL)
 
         x_bow = np.zeros((len(Z),))
         x_stern = np.zeros((len(Z),))
 
-        for i in range(0,len(Z)):
+        for i in range(0, len(Z)):
             # Now generate the remaining watelines
             if self.bit_BB and Z[i] <= self.WL:
                 x_bow[i] = self.BB_profile(Z[i])
             else:
                 x_bow[i] = self.bow_profile(Z[i])
 
-            if self.bit_SB and Z[i] <= self.HSBOA*self.WL:
-
+            if self.bit_SB and Z[i] <= self.HSBOA * self.WL:
                 x_stern[i] = self.SB_profile(Z[i])
             else:
                 x_stern[i] = self.stern_profile(Z[i])
-
 
         WL = x_stern[-1] - x_bow[-1]
 
         X = np.linspace(np.amin(x_bow), np.amax(x_stern), PointsPerWL)
 
-        Y = np.zeros((PointsPerWL,NUM_WL))
+        Y = np.zeros((PointsPerWL, NUM_WL))
 
-        points = self.gen_MeshGridPointCloud(Z = Z, X = X, bit_GridOrList = 1)
+        points = self.gen_MeshGridPointCloud(Z=Z, X=X, bit_GridOrList=1)
 
+        for i in range(0, len(Z)):
+            idx = np.where(X == points[i][1][0])[0][
+                0
+            ]  # points[i,1,0] = first X in points where y != 0
 
+            for j in range(1, len(points[i]) - 1):
+                Y[idx + j - 1, i] = points[i][j][1]
 
-        for i in range(0,len(Z)):
-            idx = np.where(X == points[i][1][0])[0][0] #points[i,1,0] = first X in points where y != 0
+        X = X - X[0]  # Normalize so that X[0] = 0
+        Z = Z - Z[-1]  # Normalize so that Z[-1] = 0
 
-
-
-            for j in range(1,len(points[i])-1):
-                Y[idx+j-1,i] = points[i][j][1]
-
-
-        X = X - X[0] # Normalize so that X[0] = 0
-        Z = Z - Z[-1] # Normalize so that Z[-1] = 0
-
-        return X,Z,Y,WL
-
-
-
-
-
-
+        return X, Z, Y, WL
 
     def input_Constraints(self):
+        return np.concatenate(
+            (
+                self.GenralHullformConstraints(),
+                self.CrossSectionConstraints(),
+                self.BowformConstraints(),
+                self.SternformConstraints(),
+                self.BulbformConstraints(),
+            )
+        )
 
-        return np.concatenate((self.GenralHullformConstraints(),self.CrossSectionConstraints(), self.BowformConstraints(), self.SternformConstraints(), self.BulbformConstraints()))
-
-
-
-    '''
+    """
     =========================================================================
                 Section 7: Geometric and Volumetric Analysis Fucntions
     ==========================================================================
@@ -2292,9 +2520,9 @@ class Hull_Parameterization:
     8) Max_Beam_midship       -> Returns the maximum beam of the midship section (calculated from midship section functions)
     9) Max_Beam_PC            -> Returns the maximum beam of the hull (Estimated from point cloud for volume calculations)
 
-    '''
+    """
 
-    def Calc_VolumeProperties(self, NUM_WL = 101, PointsPerWL = 1000):
+    def Calc_VolumeProperties(self, NUM_WL=101, PointsPerWL=1000):
         """Generate a point cloud to be used for volumetric measurements and
         calls all of the evaluation measurements to be calculated.
 
@@ -2305,9 +2533,11 @@ class Hull_Parameterization:
         Returns:
             _type_: _description_
         """
-        Z = np.linspace(0.00001,self.Dd, num=NUM_WL)
+        Z = np.linspace(0.00001, self.Dd, num=NUM_WL)
 
-        self.PCMeasurement = self.gen_pointCloud(NUM_WL = NUM_WL, PointsPerWL = PointsPerWL, bit_GridOrList = 1, Z = Z)
+        self.PCMeasurement = self.gen_pointCloud(
+            NUM_WL=NUM_WL, PointsPerWL=PointsPerWL, bit_GridOrList=1, Z=Z
+        )
 
         self.Calc_WaterPlaneArea()
 
@@ -2325,60 +2555,56 @@ class Hull_Parameterization:
 
         return Z
 
-
     def Calc_Volumes(self):
         """Calculates a 3D Volume of a hull  below a height z by integrating the
         waterplane areas of each waterline below z as well.
         """
         Vol = np.zeros((len(self.PCMeasurement),))
 
-        Vol[0] = 0.5*self.Areas_WP[0]*self.PCMeasurement[0,0,2]
+        Vol[0] = 0.5 * self.Areas_WP[0] * self.PCMeasurement[0, 0, 2]
 
-        for i in range(1,len(Vol)):
-            Vol[i] = Vol[i-1] +  0.5*(self.Areas_WP[i] + self.Areas_WP[i-1])*(self.PCMeasurement[i,0,2] - self.PCMeasurement[i-1,0,2])
+        for i in range(1, len(Vol)):
+            Vol[i] = Vol[i - 1] + 0.5 * (self.Areas_WP[i] + self.Areas_WP[i - 1]) * (
+                self.PCMeasurement[i, 0, 2] - self.PCMeasurement[i - 1, 0, 2]
+            )
 
-        self.Volumes =  Vol
+        self.Volumes = Vol
 
     def Calc_WaterPlaneArea(self):
-        """Calculates the waterplane area for a given z height
-        """
+        """Calculates the waterplane area for a given z height"""
         Areas = np.zeros((len(self.PCMeasurement),))
 
-        for i in range(0,len(Areas)):
-
+        for i in range(0, len(Areas)):
             WL = self.PCMeasurement[i]
-            Areas[i] = 2.0*np.trapz(WL[:,1], x=WL[:,0])
+            Areas[i] = 2.0 * np.trapz(WL[:, 1], x=WL[:, 0])
 
         self.Areas_WP = Areas
 
     def Calc_LCFs(self):
-        """Calculates the Longitudinal Center of Flotation for the Waterplane sections
-        """
+        """Calculates the Longitudinal Center of Flotation for the Waterplane sections"""
         LCF = np.zeros((len(self.PCMeasurement),))
 
-        for i in range(0,len(LCF)):
-
+        for i in range(0, len(LCF)):
             Moment = 0
 
-            for j in range(1,len(self.PCMeasurement[i])):
-                    #sum up trapezoid moments of area
+            for j in range(1, len(self.PCMeasurement[i])):
+                # sum up trapezoid moments of area
 
+                dx = self.PCMeasurement[i, j, 0] - self.PCMeasurement[i, j - 1, 0]
+                a = 2.0 * self.PCMeasurement[i, j, 1]
+                b = 2.0 * self.PCMeasurement[i, j - 1, 1]
 
-                    dx =  self.PCMeasurement[i,j,0] - self.PCMeasurement[i,j-1,0]
-                    a = 2.0 * self.PCMeasurement[i,j,1]
-                    b = 2.0 * self.PCMeasurement[i,j-1,1]
+                cx = self.PCMeasurement[i, j - 1, 0] + dx / 3.0 * (2.0 * a + b) / (
+                    a + b
+                )
 
+                Moment = Moment + cx * 0.5 * (a + b) * dx
 
-
-                    cx = self.PCMeasurement[i,j-1,0] + dx/3.0 * (2.0*a + b) / (a + b)
-
-                    Moment = Moment + cx * 0.5*(a+b)*dx
-
-            LCF[i] = Moment/self.Areas_WP[i]
+            LCF[i] = Moment / self.Areas_WP[i]
 
         self.LCFs = LCF
 
-    def Calc_CB(self,Z):
+    def Calc_CB(self, Z):
         """Calculates the longitudinal and vertical centers of buoyancy for each
         of the waterlines. CB[:,0] provides the LCB and CB[:,1] is the VCB for
         each volume.
@@ -2386,50 +2612,51 @@ class Hull_Parameterization:
         Args:
             Z (_type_): _description_
         """
-        CB = np.zeros((len(self.PCMeasurement),2))
+        CB = np.zeros((len(self.PCMeasurement), 2))
 
-        #Calculate Moments for X and Z directions for the Center of Buoynacy
+        # Calculate Moments for X and Z directions for the Center of Buoynacy
 
         MomentX = np.multiply(self.LCFs, self.Areas_WP)
 
-        MomentZ = np.multiply(Z,self.Areas_WP)
+        MomentZ = np.multiply(Z, self.Areas_WP)
 
-
-        for i in range(0,len(CB)):
-
-            CB[i,0] = np.trapz(MomentX[0:i+1],x = Z[0:i+1])/self.Volumes[i]
-            CB[i,1] = np.trapz(MomentZ[0:i+1],x = Z[0:i+1])/self.Volumes[i]
+        for i in range(0, len(CB)):
+            CB[i, 0] = np.trapz(MomentX[0 : i + 1], x=Z[0 : i + 1]) / self.Volumes[i]
+            CB[i, 1] = np.trapz(MomentZ[0 : i + 1], x=Z[0 : i + 1]) / self.Volumes[i]
 
         self.VolumeCentroids = CB
 
-
     def Calc_2ndMoments(self):
-        """Calculate the second moment of area Ixx and Iyy for each WaterPlane in the form I[i] = [Ixxi,Iyyi]
-        """
-        I = np.zeros((len(self.PCMeasurement),2))
+        """Calculate the second moment of area Ixx and Iyy for each WaterPlane in the form I[i] = [Ixxi,Iyyi]"""
+        I = np.zeros((len(self.PCMeasurement), 2))
 
-        for i in range(0,len(I)):
-
+        for i in range(0, len(I)):
             Ixx = 0.0
             Iyy = 0.0
 
-            for j in range(1,len(self.PCMeasurement[i])):
-                #sum up trapezoid moments of area
-                dx = self.PCMeasurement[i,j,0] - self.PCMeasurement[i,j-1,0]
-                a = 2.0 * self.PCMeasurement[i,j,1]
-                b = 2.0 * self.PCMeasurement[i,j-1,1]
+            for j in range(1, len(self.PCMeasurement[i])):
+                # sum up trapezoid moments of area
+                dx = self.PCMeasurement[i, j, 0] - self.PCMeasurement[i, j - 1, 0]
+                a = 2.0 * self.PCMeasurement[i, j, 1]
+                b = 2.0 * self.PCMeasurement[i, j - 1, 1]
 
-                cx = self.PCMeasurement[i,j-1,0] + dx/3.0 * (2.0*a+b)/(a+b)
+                cx = self.PCMeasurement[i, j - 1, 0] + dx / 3.0 * (2.0 * a + b) / (
+                    a + b
+                )
 
-                Ixx = Ixx + dx/48.0 * (a + b) * (a**2.0 + b**2.0)
+                Ixx = Ixx + dx / 48.0 * (a + b) * (a**2.0 + b**2.0)
 
-                Iyy = Iyy + dx**3.0 * (a**2.0 + 4.0*a*b + b**2.0)/(36*(a+b)) + 0.5*(a+b)*dx*(self.LCFs[i] - cx)**2.0
+                Iyy = (
+                    Iyy
+                    + dx**3.0 * (a**2.0 + 4.0 * a * b + b**2.0) / (36 * (a + b))
+                    + 0.5 * (a + b) * dx * (self.LCFs[i] - cx) ** 2.0
+                )
 
-            I[i] = [Ixx,Iyy]
+            I[i] = [Ixx, Iyy]
 
         self.I_WP = I
 
-    def Calc_WettedSurface(self,Z):
+    def Calc_WettedSurface(self, Z):
         """Calculate and sum the wetted surface between each draft line
         (Z[]and at the bottom of the hull, by estimating length along the
         surface.
@@ -2440,38 +2667,41 @@ class Hull_Parameterization:
         ArcL = np.zeros((len(Z),))
         WSA = np.zeros((len(Z),))
 
-
-        for i in range(0,len(ArcL)):
-
-            for j in range(1,len(self.PCMeasurement[0])):
-
-                #dL = distance of length along outside of ship along waterline at z[i]
-                dL = np.sqrt((self.PCMeasurement[i,j,0] - self.PCMeasurement[i,j-1,0])**2.0 + (self.PCMeasurement[i,j,1] - self.PCMeasurement[i,j-1,1])**2.0)
+        for i in range(0, len(ArcL)):
+            for j in range(1, len(self.PCMeasurement[0])):
+                # dL = distance of length along outside of ship along waterline at z[i]
+                dL = np.sqrt(
+                    (self.PCMeasurement[i, j, 0] - self.PCMeasurement[i, j - 1, 0])
+                    ** 2.0
+                    + (self.PCMeasurement[i, j, 1] - self.PCMeasurement[i, j - 1, 1])
+                    ** 2.0
+                )
 
                 ArcL[i] = ArcL[i] + dL
 
-            ArcL[i] + ArcL[i] + self.PCMeasurement[i,-1,1] #Add transom width to Arc Length
+            (
+                ArcL[i] + ArcL[i] + self.PCMeasurement[i, -1, 1]
+            )  # Add transom width to Arc Length
 
-        #Wetted Surface Area is integral of Arc Length from 0 to Z[idx]
+        # Wetted Surface Area is integral of Arc Length from 0 to Z[idx]
 
-        WSA[0] = 2*self.Areas_WP[0] #wetted surface area at bottom of hull is approximately area of waterplane at z ~=0
+        WSA[0] = (
+            2 * self.Areas_WP[0]
+        )  # wetted surface area at bottom of hull is approximately area of waterplane at z ~=0
 
-        for i in range(1,len(Z)):
-
-         #Wetted Surface area is cumulative sum of WSA at each height (2*0.5 for trapezoid rule and for 2 sides of hull = 1)
-         WSA[i] = WSA[i-1] +  (ArcL[i]+ArcL[i-1])*(Z[i] - Z[i-1])
+        for i in range(1, len(Z)):
+            # Wetted Surface area is cumulative sum of WSA at each height (2*0.5 for trapezoid rule and for 2 sides of hull = 1)
+            WSA[i] = WSA[i - 1] + (ArcL[i] + ArcL[i - 1]) * (Z[i] - Z[i - 1])
 
         self.Area_WS = WSA
 
-
     def Calc_WaterlineLength(self):
-        """Return the length of the waterline for each Z.
-        """
+        """Return the length of the waterline for each Z."""
         WLL = np.zeros((len(self.PCMeasurement),))
 
-        for i in range(0,len(WLL)):
-            #Length of Stern Position - Bow Position in X
-            WLL[i] = self.PCMeasurement[i,-1,0] - self.PCMeasurement[i,0,0]
+        for i in range(0, len(WLL)):
+            # Length of Stern Position - Bow Position in X
+            WLL[i] = self.PCMeasurement[i, -1, 0] - self.PCMeasurement[i, 0, 0]
 
         self.WL_Lengths = WLL
 
@@ -2482,12 +2712,12 @@ class Hull_Parameterization:
             _type_: _description_
         """
         if self.bit_BB:
-            bow_start = min([0.0,self.BB_Prof[5]-self.BB_Prof[4]])
+            bow_start = min([0.0, self.BB_Prof[5] - self.BB_Prof[4]])
         else:
             bow_start = 0.0
 
         if self.bit_SB:
-            stern_end = max([self.LOA, self.SB_Prof[5]+self.SB_Prof[4]])
+            stern_end = max([self.LOA, self.SB_Prof[5] + self.SB_Prof[4]])
         else:
             stern_end = self.LOA
 
@@ -2502,11 +2732,13 @@ class Hull_Parameterization:
         Returns:
             _type_: _description_
         """
-        #fist check Bd vs Bc
+        # fist check Bd vs Bc
         if self.Bd >= self.Bc:
-            self.Max_Beam_midship = self.Bd*2.0
+            self.Max_Beam_midship = self.Bd * 2.0
         else:
-            self.Max_Beam_midship = (self.Rc_Center[0] + self.Rc)*2.0 #Max beam is the y coordinate of the center of the chine plus the radius of the chine
+            self.Max_Beam_midship = (
+                (self.Rc_Center[0] + self.Rc) * 2.0
+            )  # Max beam is the y coordinate of the center of the chine plus the radius of the chine
 
         return self.Max_Beam_midship
 
@@ -2517,12 +2749,11 @@ class Hull_Parameterization:
         Returns:
             _type_: _description_
         """
-        self.Max_Beam_PC = 2.0*np.amax(self.PCMeasurement[:,:,1])
+        self.Max_Beam_PC = 2.0 * np.amax(self.PCMeasurement[:, :, 1])
 
         return self.Max_Beam_PC
 
-
-    def interp(A,Z,z):
+    def interp(A, Z, z):
         """Interpolates data to approximate A(z) given values of A(Z)
 
         Args:
@@ -2535,6 +2766,6 @@ class Hull_Parameterization:
         """
         idx = np.where(Z < z)[0][-1]
 
-        frac = (z - Z[idx])/(Z[idx+1] - Z[idx])
+        frac = (z - Z[idx]) / (Z[idx + 1] - Z[idx])
 
-        return A[idx] + frac*(A[idx+1] - A[idx])
+        return A[idx] + frac * (A[idx + 1] - A[idx])
