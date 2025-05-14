@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Mar 29 11:50:30 2022
@@ -47,18 +46,14 @@ The hull parameterization is defined in five chunks:
 
 """
 
-# import all the goodies:
+import typing
 import numpy as np
-
-# scipy.optimize import fsolve
 from matplotlib import pyplot as plt
-
 import trimesh
 
 
 class Hull_Parameterization:
-    # Define parameters of targethull
-    def __init__(self, inputs):
+    def __init__(self, inputs: np.ndarray):
         """Construct a hull parametrization from a vector that represents the
         parametrization.
 
@@ -71,7 +66,6 @@ class Hull_Parameterization:
                 parameter that represents the hull. Refer to external
                 documentation on the order and meaning of each argument.
         """
-
         self.LOA = inputs[0]
         self.Lb = inputs[1] * self.LOA
         self.Ls = inputs[2] * self.LOA
@@ -127,11 +121,12 @@ class Hull_Parameterization:
         self.Bsb = inputs[42]
         self.Lsbm = inputs[43]
         self.Rsb = inputs[44]
+        self.x_offset = (19 / 20) * inputs[0]
 
         # Generate and Check the Forms of the Overall Hull
 
         self.GenGeneralHullform()
-        # C1 = print(self.GenralHullformConstraints())
+        # C1 = print(self.GeneralHullformConstraints())
 
         self.GenCrossSection()
         # C2 = print(self.CrossSectionConstraints())
@@ -184,12 +179,12 @@ class Hull_Parameterization:
         """
         self.Lm = self.LOA - self.Ls - self.Lb
 
-    def GenralHullformConstraints(self):  # TODO Typo
+    def GeneralHullformConstraints(self):
         """Check that constraints are satisfied for the hullfrom. If no
         constraint violations are found,
 
         Returns:
-            np.ndarray: Genneral hullform constraints
+            np.ndarray: General hullform constraints
         """
         C = np.array([-self.LOA + self.Ls + self.Lb, self.WL - self.Dd])
         return C
@@ -212,14 +207,12 @@ class Hull_Parameterization:
         0) 0 <= Dc < Dd
         1) Rc and Rk are agebraically limited to ensure that the radius can exist with the
             given Bd,Dd,BcdC, and Beta values.
-
     """
 
     def GenCrossSection(self):
         """Calculate the constants and other form factors that will allow future
         analysis of the cross section.
         """
-
         # (y,z) pair for center of keel radius
         self.Rk_Center = np.array(
             [
@@ -329,7 +322,7 @@ class Hull_Parameterization:
         ]
         return C
 
-    def halfBeam_MidBody(self, z):
+    def halfBeam_MidBody(self, z: np.floating) -> np.floating:
         """Calculate the half beam of the cross section at a given height, z
         If 0 > z or Dd < z, then the function returns -1 as an error
 
@@ -339,7 +332,6 @@ class Hull_Parameterization:
         Returns:
             float: The half beam of the cross section at a given height
         """
-
         if z < 0.0 or z > self.Dd:
             return -1
         elif z >= 0.0 and z < self.Rk_LG_int[1]:
@@ -360,7 +352,6 @@ class Hull_Parameterization:
         """Plot intersection points in blue. Plot chine pt in green.
         Plot Center of Rc and Rk in red. half Beam(z) in black.
         """
-
         z = np.linspace(0.0, self.Dd, num=200)
         y = np.zeros((200,))
         for i in range(0, len(z)):
@@ -419,14 +410,12 @@ class Hull_Parameterization:
         2) 0 <= BK_x < Kappa_BOW*Lb
         3) 0 <= BK_z < Dd
         4) delta(z) > Bow(z) and Keel(z) for 0 <= z <= Dd  -> check z = 0,Dd,BK, Vert (Bow) and Vert (Delta)
-
     """
 
     def GenBowForm(self):
         """Compute the other form factors of the Bowform that can be calculated
         from the inputs.
         """
-
         if self.BOW[0] == 0:
             Zv = -1.0
         else:
@@ -480,9 +469,7 @@ class Hull_Parameterization:
         else:
             self.DELTA_BOW[2] = -np.amax(C[0:2])
 
-    # The following funcitons return the
-
-    def bowrise(self, z):
+    def bowrise(self, z: np.floating) -> np.floating:
         """Return the x position of the bowrise for a given z for BK_z <= z <= Dd
 
         Args:
@@ -493,7 +480,7 @@ class Hull_Parameterization:
         """
         return self.BOW[0] * z**2.0 + self.BOW[1] * z + self.BOW[2]
 
-    def keelrise_bow(self, z):
+    def keelrise_bow(self, z: np.floating) -> np.floating:
         """Return the x position of the keelrise at the bow for a given z
         for 0 <= z <= Bk_z
 
@@ -505,7 +492,7 @@ class Hull_Parameterization:
         """
         return -np.sqrt(z / self.KEEL_BOW) + self.Kappa_BOW * self.Lb
 
-    def delta_bow(self, z):
+    def delta_bow(self, z: np.floating) -> np.floating:
         """Return the x position where the full cross section width is achieved
         for a given z for 0 <= z <= Dd
 
@@ -523,7 +510,7 @@ class Hull_Parameterization:
             + self.DELTA_BOW[2]
         )
 
-    def drift(self, z):
+    def drift(self, z: np.floating) -> np.floating:
         """Return the drift angle in radians.
 
         Args:
@@ -536,7 +523,7 @@ class Hull_Parameterization:
             np.pi * (self.DRIFT[0] * z**2.0 + self.DRIFT[1] * z + self.DRIFT[2]) / 180.0
         )
 
-    def solve_waterline_bow(self, z):
+    def solve_waterline_bow(self, z: np.floating) -> np.ndarray:
         """Solve the cubic function: y(half beam) = Ax^3 + Bx^2 + CX + D for the
         half beam of the profile between the bow/keel rise and delta for a given
         z for 0 <= z <= Dd
@@ -548,11 +535,8 @@ class Hull_Parameterization:
             np.ndarray: The PROF, i.e. [A, B, C, D] as the coefficients of the
                 cubic formula Ax^3 + Bx^2 + CX + D.
         """
-
         X1 = self.bow_profile(z)
-
         X2 = self.delta_bow(z)
-
         Y2 = self.halfBeam_MidBody(z)
 
         A = np.array(
@@ -563,11 +547,10 @@ class Hull_Parameterization:
                 [3.0 * X2**2.0, 2.0 * X2, 1.0, 0.0],
             ]
         )
-
         b = np.array([0.0, np.tan(self.drift(z)), Y2, 0.0])
         return np.linalg.solve(A, b)
 
-    def bow_profile(self, z):
+    def bow_profile(self, z: np.floating) -> np.floating:
         """
         This assumes that z >= 0 and z <= Dd
 
@@ -577,14 +560,13 @@ class Hull_Parameterization:
         Returns:
             _type_: _description_
         """
-
         if z <= self.BK[1]:
             X1 = self.keelrise_bow(z)
         else:
             X1 = self.bowrise(z)
         return X1
 
-    def halfBeam_Bow(self, x, PROF):
+    def halfBeam_Bow(self, x: list[np.floating], PROF: np.ndarray) -> np.ndarray:
         """Return the halfbeam along the bow taper between the bow/keel rise and
         delta(z), PROF is the output of solve)waterline_bow(z) x is a vector.
 
@@ -603,7 +585,7 @@ class Hull_Parameterization:
             )
         return y
 
-    def bow_dydx(self, x, PROF):
+    def bow_dydx(self, x: list[np.floating], PROF: np.ndarray) -> np.ndarray:
         """Return slope dydx of the bow taper at a height z that is defined by PROF.
 
         Args:
@@ -620,7 +602,13 @@ class Hull_Parameterization:
 
         return dydx
 
-    def gen_waterline_bow(self, z, NUM_POINTS=100, X=[0, 1], bit_spaceOrGrid=1):
+    def gen_waterline_bow(
+        self,
+        z: np.floating,
+        NUM_POINTS: typing.Optional[int] = 100,
+        X: typing.Optional[np.ndarray] = None,
+        bit_spaceOrGrid: typing.Optional[int] = 1,
+    ) -> np.ndarray:
         """Generate a set of points [[X1,Y1] .... [X2,Y2]] that detail the
         curvature of the bow taper for a given z.
 
@@ -639,27 +627,24 @@ class Hull_Parameterization:
             _type_: A set of points [X, Y] that detail the curvature of the
                 bow taper for a given z. i.e. is two column vectors.
         """
+        if X is None:
+            X = np.array([0, 1])
+
         x1 = self.bow_profile(z)
-
         x2 = self.delta_bow(z)
-
         prof = self.solve_waterline_bow(z)
 
         # Set x based on spacing or grid
         if bit_spaceOrGrid:
             x = np.linspace(x1, x2, NUM_POINTS)
             XY = np.zeros((len(x), 2))
-
         else:
             x = [i for i in X if (i > x1 and i <= x2)]
-
             x = np.concatenate(([x1], x))
             XY = np.zeros((len(x), 2))
 
         XY[0, :] = [x1, 0.0]
-
         y = self.halfBeam_Bow(x[1:], prof)
-
         XY[1:] = np.transpose([x[1:], y])
 
         return XY
@@ -729,7 +714,7 @@ class Hull_Parameterization:
     =======================================================================
                         Section 4: Stern Form
     =======================================================================
-        The Stern Form is defined by the following inputs:
+    The Stern Form is defined by the following inputs:
         0) bit_EP_S -> defines whether the stern will be elliptical (1) or parabolic (0) below the SK intersect
         1) bit_EP_T -. Defines whether the stern will be elliptical (1) or parabolic (0) abover the SK intersect
         2) Bs   -> The width of the stern at the deck of the ship in [m] or fraction of LOA
@@ -744,9 +729,7 @@ class Hull_Parameterization:
         11) Rc_trans -> The Chine radius of the chine at the transom in [m] or fraction of LOA
         12) Rk_trans -> the keel radius of the chine at the transom in [m] or fraction of LOA
 
-
-
-        REMOVE THESE FOR NOW
+    REMOVE THESE FOR NOW
         7) A_Ry-> z term for  Ry(z), the y-raduis of the ellipse at the stern of the ship
         8) B_Ry-> const for Ry(z), the y-raduis of the ellipse at the stern of the ship
         9) A_Rx-> z term for  Rx(z), the x-raduis of the ellipse at the stern of the ship
@@ -756,18 +739,16 @@ class Hull_Parameterization:
         16) BconvT -> the z term for Converge Angle(z) the tangent angle of the gunwhale at the transom
         17) CconvT -> the const term for Converge Angle(z) the tangent angle of the gunwhale at the transom
 
-
     These Parameters solve for 7 functions:
         0) Transom(z)   -> gives the X position of the transom in the form  Az + B
         1) Sternrise(x)  -> gives the z height of the stern rise with respect to X in the form A*(X-Kappa*Ls)^2
         2) Delta_Stern(z) -> gives the x position between LOA-Ls and LOA where the full breadth is achieved for a given z: A(z)^2 + B(z) + C = X
         3) halfBeam_transom(z) -> gives the halfbeam of the transom for z between SKz and Dd
 
-        REMOVE THESE FOR BIW
+    REMOVE THESE FOR BIW
         3) Converge(z) -> gives the convergence tangent angle of the gunwhale at the transom for a given z: Az^2 + Bz + C
         4) Ry(z) -> gives the y radius of the stern ellipse in the form Ry = Az + B
         5) Rx(z) -> gives the x radius of the stern ellipse in the form Rx = Az + B
-
 
     These four functions define the following curve for each z:
         halfBeam_Stern(x) = Y(x) = Parabola + Ellipse for all z between 0 and Dd
@@ -928,7 +909,7 @@ class Hull_Parameterization:
         self.Rc_LG_int_trans = C[2:4]
         self.Rc_Center_trans = C[4:6]
 
-    def transom(self, z):
+    def transom(self, z: np.floating) -> np.floating:
         """Return the x position of the transom for a given z fr SK_z <= z <= Dd
 
         Args:
@@ -939,7 +920,7 @@ class Hull_Parameterization:
         """
         return self.TRANS[0] * z + self.TRANS[1]
 
-    def sternrise(self, z):
+    def sternrise(self, z: np.floating) -> np.floating:
         """Return the x position of the sternrise for a given z.
 
         Args:
@@ -952,7 +933,7 @@ class Hull_Parameterization:
             np.sqrt(z / self.STERNRISE) + self.Lb + self.Lm + self.Ls * self.Kappa_STERN
         )
 
-    def stern_profile(self, z):
+    def stern_profile(self, z: np.floating) -> np.floating:
         """Shows the profile of the stern without the bulbous stern:
 
         Args:
@@ -972,7 +953,7 @@ class Hull_Parameterization:
             else:
                 return self.transom(z)
 
-    def delta_stern(self, z):
+    def delta_stern(self, z: np.floating) -> np.floating:
         """Return the starting position of the stern taper at a given height.
 
         Args:
@@ -989,7 +970,7 @@ class Hull_Parameterization:
             + self.DELTA_STERN[2]
         )
 
-    def halfBeam_Transom(self, z):
+    def halfBeam_Transom(self, z: np.floating) -> list[float]:
         """Return the x,y pair of the transom at a height z.
 
         Returns -1 if z is out of range.
@@ -1066,7 +1047,7 @@ class Hull_Parameterization:
         ax1.plot([self.Bc_trans], [self.Dc_trans], "o", color="green")
         ax1.plot(y[:, 1], z, "-", color="black", linewidth=0.75)
 
-    def halfBeam_Stern(self, x, PROF):
+    def halfBeam_Stern(self, x: list[np.floating], PROF: np.ndarray) -> np.ndarray:
         """Return the halfbeam along the stern taper between delta(z) and
         stern_profile(z).
 
@@ -1096,7 +1077,7 @@ class Hull_Parameterization:
 
         return y
 
-    def stern_dydx(self, x, PROF):
+    def stern_dydx(self, x: list[np.floating], PROF: np.ndarray) -> np.ndarray:
         """Return slope dydx of the stern taper at a height z that is defined
         by PROF.
 
@@ -1118,14 +1099,13 @@ class Hull_Parameterization:
                     * 1
                     / np.sqrt(np.abs(1.0 - ((x[i] - PROF[6]) / PROF[4]) ** 2.0))
                 )
-
         else:
             for i in range(0, len(x)):
                 dydx[i] = 2.0 * PROF[1] * x[i] + PROF[2]
 
         return dydx
 
-    def solve_waterline_stern(self, z):
+    def solve_waterline_stern(self, z: np.floating) -> np.ndarray:
         """Return PROF, a parabola [A,B,C], an ellipse [Rx, Ry, Cx, Cy] of the
         two curves such that they are tangent at the intersection. Compares
         bit_EP_S and bit_EP_T -> if  the curve is a parabola, the ellipse values
@@ -1138,7 +1118,6 @@ class Hull_Parameterization:
             np.ndarray: PROF, the coefficients of a parabola [A,B,C] and ellipse
                 [Rx, Ry, Cx, Cy], as [A,B,C, Rx, Ry, Cx, Cy].
         """
-
         x1 = self.delta_stern(z)
         y1 = self.halfBeam_MidBody(z)
 
@@ -1189,7 +1168,13 @@ class Hull_Parameterization:
 
         return PROF
 
-    def gen_waterline_stern(self, z, NUM_POINTS=100, X=[0, 1], bit_spaceOrGrid=1):
+    def gen_waterline_stern(
+        self,
+        z: np.floating,
+        NUM_POINTS: typing.Optional[int] = 100,
+        X: typing.Optional[np.ndarray] = None,
+        bit_spaceOrGrid: typing.Optional[int] = 1,
+    ) -> np.ndarray:
         """Generate a set of points [[X1,Y1] .... [X2,Y2]] that detail the
         curvature of the bow taper for a given z.
 
@@ -1209,25 +1194,23 @@ class Hull_Parameterization:
                 of the bow taper for a given z. i.e. two column vectors.
                 Columns have the same length as x.
         """
+        if X is None:
+            X = np.array([0, 1])
+
         x1 = self.delta_stern(z)
-
         x2 = self.stern_profile(z)
-
         prof = self.solve_waterline_stern(z)
 
         if bit_spaceOrGrid:
             x = np.linspace(x1, x2, NUM_POINTS)
             XY = np.zeros((len(x), 2))
-
         else:
             x = [i for i in X if (i >= x1 and i < x2)]
             x = np.concatenate((x, [x2]))
             XY = np.zeros((len(x), 2))
 
         y = self.halfBeam_Stern(x[0:-1], prof)
-
         XY[0:-1] = np.transpose([x[0:-1], y])
-
         # set the last element in the array to be the transom point
         XY[-1] = self.halfBeam_Transom(z)
 
@@ -1264,7 +1247,6 @@ class Hull_Parameterization:
             self.Rc_LG_int_trans[0] - self.Bc_trans,
             self.Rk_LG_int_trans[0] - self.Rc_LG_int_trans[0],
         ]
-
         return C
 
     """
@@ -1288,13 +1270,11 @@ class Hull_Parameterization:
         12) Rsb      -> radius that fillets the SB to the hull (ratio from 0 to 1) -> solved as a cubic function
 
 
-
     These Parameters solve 3 functions each for the Bulbous Bow and Bulbous Stern:
        0) Outline: Definition of upper and lower ellipse that define the profile of the bulb
        1) Profile of Max width : a parabola that is tangent to an ellipse at the  longitudinal mid point.
        2) Cross Section Generator: Solves for Rx and Ry of an upper and lower ellipse that solves for a cross section of the bulb
        3)
-
 
     Constraints/ NOTES to ensure realistic sizing/ shape of a bulb:
         0) Cross Section of bulbs at Starting position need to be encompassed by Half Beam Mid Body
@@ -1319,7 +1299,6 @@ class Hull_Parameterization:
             5)  Cx -> X center of aforementioned ellipse
             6)  Cy -> Y center of aforementioned ellipse
         """
-
         self.BB_Prof = np.zeros((7,))
         self.SB_Prof = np.zeros((7,))
 
@@ -1345,7 +1324,7 @@ class Hull_Parameterization:
             self.SB_Prof[5] = SBs + self.LOA * self.Lsb * self.Lsbm
             self.SB_Prof[6] = 0.0
 
-    def BB_profile(self, z):
+    def BB_profile(self, z: np.floating) -> np.floating:
         """Return position of leading edge of SB.
 
         Args:
@@ -1371,7 +1350,7 @@ class Hull_Parameterization:
                 * self.BB_Prof[4]
             )
 
-    def halfBeam_BB(self, z, x):
+    def halfBeam_BB(self, z: np.floating, x: list[np.floating]) -> np.ndarray:
         """Return the half breadth of the BB at height z and position x.
 
         Args:
@@ -1382,16 +1361,13 @@ class Hull_Parameterization:
             np.ndarray: Half breadth of the BB at height z and position x.
                 Same size as x.
         """
-
         if z >= self.BB_Prof[2]:
             Rz = self.BB_Prof[1]
         else:
             Rz = self.BB_Prof[2]
-
         Ry = (
             np.sqrt(np.abs(1.0 - ((z - self.BB_Prof[2]) / Rz) ** 2.0)) * self.BB_Prof[3]
         )
-
         Rx = self.BB_Prof[5] - self.BB_profile(z)
 
         y = np.zeros((len(x),))
@@ -1406,7 +1382,7 @@ class Hull_Parameterization:
 
         return y
 
-    def BB_dydx(self, z, x):
+    def BB_dydx(self, z: np.floating, x: np.ndarray) -> np.ndarray:
         """Compute the slope dy/dx slope of the bulbous bow at height z and
         position x. This assumes x is within the bulbous bow x-range.
 
@@ -1433,7 +1409,6 @@ class Hull_Parameterization:
         for i in range(0, len(x)):
             if x[i] >= self.BB_Prof[5]:
                 dydx[i] = 0.0
-
             else:
                 dydx[i] = (
                     -Ry
@@ -1445,7 +1420,7 @@ class Hull_Parameterization:
 
         return dydx
 
-    def SB_profile(self, z):
+    def SB_profile(self, z: np.floating) -> np.floating:
         """Return the x position of trailing edge of SB.
 
         Args:
@@ -1479,7 +1454,7 @@ class Hull_Parameterization:
                 * self.SB_Prof[4]
             )
 
-    def halfBeam_SB(self, z, x):
+    def halfBeam_SB(self, z: np.floating, x: list[np.floating]) -> np.ndarray:
         """Return the half breadth of the BB at height z and position x.
 
         Args:
@@ -1494,12 +1469,10 @@ class Hull_Parameterization:
             Rz = self.SB_Prof[1]
         else:
             Rz = self.SB_Prof[2]
-
         Ry = (
             np.sqrt(np.abs(1.0 - ((z - self.Hsb * self.WL * self.HSBOA) / Rz) ** 2.0))
             * self.SB_Prof[3]
         )
-
         Rx = self.SB_profile(z) - self.SB_Prof[5]
 
         y = np.zeros((len(x),))
@@ -1514,7 +1487,7 @@ class Hull_Parameterization:
 
         return y
 
-    def SB_dydx(self, z, x):
+    def SB_dydx(self, z: np.floating, x: list[np.floating]) -> np.ndarray:
         """Compute the dy/dx slope of the bulbous bow at height z and
         position x.
 
@@ -1525,17 +1498,16 @@ class Hull_Parameterization:
         Returns:
             _type_: The dy/dx slope of the bulbous bow at height z and position x.
                 Has same size as x.
+
         """
         if z >= self.Hsb * self.WL * self.HSBOA:
             Rz = self.SB_Prof[1]
         else:
             Rz = self.SB_Prof[2]
-
         Ry = (
             np.sqrt(np.abs(1.0 - ((z - self.Hsb * self.WL * self.HSBOA) / Rz) ** 2.0))
             * self.SB_Prof[3]
         )
-
         Rx = self.SB_profile(z) - self.SB_Prof[5]
 
         dydx = np.zeros((len(x),))
@@ -1543,7 +1515,6 @@ class Hull_Parameterization:
         for i in range(0, len(x)):
             if x[i] <= self.SB_Prof[5]:
                 dydx[i] = 0.0
-
             else:
                 dydx[i] = (
                     -Ry
@@ -1555,7 +1526,13 @@ class Hull_Parameterization:
 
         return dydx
 
-    def gen_waterline_bow_BB(self, z, NUM_POINTS=100, X=[0, 1], bit_spaceOrGrid=1):
+    def gen_waterline_bow_BB(
+        self,
+        z: np.floating,
+        NUM_POINTS: typing.Optional[int] = 100,
+        X: typing.Optional[np.ndarray] = None,
+        bit_spaceOrGrid: typing.Optional[int] = 1,
+    ) -> np.ndarray:
         """Return a set of [X,Y] points that accounts for the shape and fillet
         radius of a bulbous bow on the bow profile.
 
@@ -1569,35 +1546,31 @@ class Hull_Parameterization:
             np.ndarray: a set of [X,Y] points that accounts for the shape and fillet
                 radius of a bulbous bow on the bow profile.
         """
+        if X is None:
+            X = np.array([0, 1])
+
         a = NUM_POINTS
         if z >= self.WL:
             # If z is above the Ship's waterline, then the bulbous bow does not exist in that section
             return self.gen_waterline_bow(
                 z, NUM_POINTS=a, X=X, bit_spaceOrGrid=bit_spaceOrGrid
             )
-
         else:
             PROF = self.solve_waterline_bow(z)
-
             x1 = self.BB_profile(z)
-
             x2 = self.delta_bow(z)
 
             # Set x based on spacing or grid
             if bit_spaceOrGrid:
                 x = np.linspace(x1, x2, NUM_POINTS)
                 XY = np.zeros((len(x), 2))
-
             else:
                 x = [i for i in X if (i > x1 and i <= x2)]
-
                 x = np.concatenate(([x1], x))
-
                 XY = np.zeros((len(x), 2))
 
             # Find most likely point where BB intersects Bow Curve
             A = PROF.copy()
-
             A[3] = A[3] - self.halfBeam_BB(z, [self.BB_Prof[5]])
 
             ROOTS = np.roots(A)
@@ -1612,12 +1585,10 @@ class Hull_Parameterization:
                 )
             )  # Need to call np.real as there will be instances where 2nd and 3rd roots of PROF will be imaginary. calling np.real to clean this up
 
-            """
-            #ind start and ending points for Rbb -> not quite a circular radius, but it is a cubic fillet (sorta counts)
-             Xrad are the points forward and aft where fillet will start.
-            Xrad[0] is Rbb fraction of distance between interesect and fwd profie of BB at z
-            Xrad[1] is Rbb fraction of the distance bewtween the insect and delta_bow(z)
-            """
+            # ind start and ending points for Rbb -> not quite a circular radius, but it is a cubic fillet (sorta counts)
+            # Xrad are the points forward and aft where fillet will start.
+            # Xrad[0] is Rbb fraction of distance between interesect and fwd profie of BB at z
+            # Xrad[1] is Rbb fraction of the distance bewtween the insect and delta_bow(z)
             dx = abs(
                 np.amin([x_int - self.BB_profile(z), self.delta_bow(z) - x_int])
             )  # Distance over which fillet occurs # Need to add abs to avoid dumb errors
@@ -1632,14 +1603,12 @@ class Hull_Parameterization:
             ]
             dydx = [self.BB_dydx(z, [Xrad[0]])[0], self.bow_dydx([Xrad[1]], PROF)[0]]
 
-            """
-            Rbb is quartic systems of eqns
-            5 boundary conditions:
-                both (Xrad, Yrad) on fillet curve
-                both dydx are matched at ends
-                dydx halfway between BCs is mean of BC dydx and avg slope of BC end points
-
-            """
+            # Rbb is quartic systems of eqns
+            # 5 boundary conditions:
+            #     both (Xrad, Yrad) on fillet curve
+            #     both dydx are matched at ends
+            #     dydx halfway between BCs is mean of BC dydx and avg slope of BC end points
+            #
 
             # dydx_mean = (2.0*((Yrad[1] - Yrad[0])/(Xrad[1]-Xrad[0])) + dydx[0] + dydx[1])/4.0
 
@@ -1693,12 +1662,17 @@ class Hull_Parameterization:
             ybow = self.halfBeam_Bow(xbow, PROF)
 
             XY[1:, 0] = x[1:]
-
             XY[1:, 1] = np.concatenate((ybb, ybbrad, ybow))
 
             return XY
 
-    def gen_waterline_stern_SB(self, z, NUM_POINTS=100, X=[0, 1], bit_spaceOrGrid=1):
+    def gen_waterline_stern_SB(
+        self,
+        z: np.floating,
+        NUM_POINTS: typing.Optional[int] = 100,
+        X: typing.Optional[np.ndarray] = None,
+        bit_spaceOrGrid: typing.Optional[int] = 1,
+    ) -> np.ndarray:
         """Return a set of [X,Y] points that accounts for the shape and fillet
         radius of a bulbous bow on the bow profile.
 
@@ -1713,6 +1687,9 @@ class Hull_Parameterization:
                 fillet radius of a bulbous bow on the bow profile.
                 i.e. two column vectors.
         """
+        if X is None:
+            X = np.array([0, 1])
+
         a = NUM_POINTS
         if (
             z >= self.WL * self.HSBOA
@@ -1724,9 +1701,7 @@ class Hull_Parameterization:
         else:
             # Set up half beam for stern at z
             PROF = self.solve_waterline_stern(z)
-
             x1 = self.delta_stern(z)
-
             x2 = self.SB_profile(z)
 
             # Create x distribution
@@ -1916,7 +1891,6 @@ class Hull_Parameterization:
 
         else:
             C[0:6] = np.array([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0])
-
         if self.bit_SB:
             if self.Beta == 0.0:
                 C[6:10] = np.array(
@@ -1972,13 +1946,16 @@ class Hull_Parameterization:
 
     This section contains functions needed to generate a complete mesh of the hull
     as an STL
-
-
     """
 
     def gen_MeshGridPointCloud(
-        self, NUM_WL=51, PointsPerLOA=501, Z=[], X=[], bit_GridOrList=1
-    ):
+        self,
+        NUM_WL: int = 51,
+        PointsPerLOA: int = 501,
+        Z: typing.Optional[np.ndarray] = None,
+        X: typing.Optional[np.ndarray] = None,
+        bit_GridOrList: int = 1,
+    ) -> list[np.ndarray]:
         """Generate each waterline with even x and z spacing in a grid.
         Z and X assignments supercede NUM_WL and PointsPerLOA Assignments.
 
@@ -1992,10 +1969,9 @@ class Hull_Parameterization:
         Returns:
             _type_: _description_
         """
-        if len(Z) == 0:
+        if Z is None:
             Z = np.linspace(0.0001 * self.Dd, self.Dd, NUM_WL)
-
-        if len(X) == 0:
+        if X is None:
             X = np.linspace(-self.LOA * 0.5, 1.5 * self.LOA, 2 * PointsPerLOA - 1)
 
         Points = []
@@ -2018,7 +1994,7 @@ class Hull_Parameterization:
 
             return Cloud
 
-    def gen_MeshGridWL(self, X, z):
+    def gen_MeshGridWL(self, X: np.ndarray, z: np.floating) -> np.ndarray:
         WL = []
 
         if z == 0.0:
@@ -2097,8 +2073,6 @@ class Hull_Parameterization:
         Returns:
             _type_: Point cloud
         """
-        print(Z.shape)
-
         if len(Z) == 0:
             z = self.gen_WLHeights(NUM_WL)
         else:
@@ -2110,7 +2084,6 @@ class Hull_Parameterization:
 
             for i in range(0, len(z)):
                 PC[i] = self.gen_WLPoints(z[i], PointsPerWL)
-
         else:
             PC = np.zeros((NUM_WL * PointsPerWL, 3))
             for i in range(0, len(z)):
@@ -2176,7 +2149,6 @@ class Hull_Parameterization:
             x = np.linspace(bow_start, stern_end, PointsPerWL)
             for i in range(0, PointsPerWL):
                 WL.append([x[i], 0.0, 0.0])
-
         else:
             # Now generate the remaining watelines
             if self.bit_BB and z <= self.WL:
@@ -2461,18 +2433,14 @@ class Hull_Parameterization:
                 x_stern[i] = self.stern_profile(Z[i])
 
         WL = x_stern[-1] - x_bow[-1]
-
         X = np.linspace(np.amin(x_bow), np.amax(x_stern), PointsPerWL)
-
         Y = np.zeros((PointsPerWL, NUM_WL))
-
         points = self.gen_MeshGridPointCloud(Z=Z, X=X, bit_GridOrList=1)
 
         for i in range(0, len(Z)):
             idx = np.where(X == points[i][1][0])[0][
                 0
             ]  # points[i,1,0] = first X in points where y != 0
-
             for j in range(1, len(points[i]) - 1):
                 Y[idx + j - 1, i] = points[i][j][1]
 
@@ -2484,7 +2452,7 @@ class Hull_Parameterization:
     def input_Constraints(self):
         return np.concatenate(
             (
-                self.GenralHullformConstraints(),
+                self.GeneralHullformConstraints(),
                 self.CrossSectionConstraints(),
                 self.BowformConstraints(),
                 self.SternformConstraints(),
@@ -2497,20 +2465,24 @@ class Hull_Parameterization:
                 Section 7: Geometric and Volumetric Analysis Fucntions
     ==========================================================================
 
-    This section contains functions to perform Naval Architecture related analyis on the geometry of the hull
+    This section contains functions to perform Naval Architecture related
+    analyis on the geometry of the hull
 
-    0) Displacement(z)        -> calculates the submerged volume at a given height, z
-    1) CentersOfBuoyancy(z)   -> Returns the centers of Buoyancy for a given waterline height, z
-    1) WaterplaneArea(z)      -> caluclates the area of the waterplane at height, z
-    2) WaterplaneMoments(z)   -> calculates the Center of Flotation, Ixx, and Iyy of the Waterplane at height(z)
-    3) MTC(z)                 -> Not Implemented yet
-    4) Righting Moment(z)     -> Not Implemented Yet
-    5) Block Coefficient      -> Not Implemented yet
-    6) Draft, Heel and Trim   -> Not Implemented Yet
-    7) LOA_wBulb              -> Returns the maximum length of the hull including added lengths from bulbs
-    8) Max_Beam_midship       -> Returns the maximum beam of the midship section (calculated from midship section functions)
-    9) Max_Beam_PC            -> Returns the maximum beam of the hull (Estimated from point cloud for volume calculations)
-
+    0) Displacement(z)        -> calculates the submerged volume at a given height, z.
+    1) CentersOfBuoyancy(z)   -> Returns the centers of Buoyancy for a given waterline height, z.
+    1) WaterplaneArea(z)      -> caluclates the area of the waterplane at height, z.
+    2) WaterplaneMoments(z)   -> calculates the Center of Flotation, Ixx,
+                                 and Iyy of the Waterplane at height(z).
+    3) MTC(z)                 -> Not Implemented yet.
+    4) Righting Moment(z)     -> Not Implemented Yet.
+    5) Block Coefficient      -> Not Implemented yet.
+    6) Draft, Heel and Trim   -> Not Implemented Yet.
+    7) LOA_wBulb              -> Returns the maximum length of the hull.
+                                 including added lengths from bulbs.
+    8) Max_Beam_midship       -> Returns the maximum beam of the midship section
+                                 (calculated from midship section functions).
+    9) Max_Beam_PC            -> Returns the maximum beam of the hull (Estimated
+                                 from point cloud for volume calculations).
     """
 
     def Calc_VolumeProperties(self, NUM_WL=101, PointsPerWL=1000):
@@ -2531,17 +2503,11 @@ class Hull_Parameterization:
         )
 
         self.Calc_WaterPlaneArea()
-
         self.Calc_Volumes()
-
         self.Calc_LCFs()
-
         self.Calc_CB(Z)
-
         self.Calc_2ndMoments()
-
         self.Calc_WettedSurface(Z)
-
         self.Calc_WaterlineLength()
 
         return Z
@@ -2577,7 +2543,6 @@ class Hull_Parameterization:
 
         for i in range(0, len(LCF)):
             Moment = 0
-
             for j in range(1, len(self.PCMeasurement[i])):
                 # sum up trapezoid moments of area
 
@@ -2624,7 +2589,6 @@ class Hull_Parameterization:
         for i in range(0, len(I)):
             Ixx = 0.0
             Iyy = 0.0
-
             for j in range(1, len(self.PCMeasurement[i])):
                 # sum up trapezoid moments of area
                 dx = self.PCMeasurement[i, j, 0] - self.PCMeasurement[i, j - 1, 0]
@@ -2675,7 +2639,6 @@ class Hull_Parameterization:
             )  # Add transom width to Arc Length
 
         # Wetted Surface Area is integral of Arc Length from 0 to Z[idx]
-
         WSA[0] = (
             2 * self.Areas_WP[0]
         )  # wetted surface area at bottom of hull is approximately area of waterplane at z ~=0
@@ -2741,7 +2704,6 @@ class Hull_Parameterization:
             _type_: _description_
         """
         self.Max_Beam_PC = 2.0 * np.amax(self.PCMeasurement[:, :, 1])
-
         return self.Max_Beam_PC
 
     def interp(A, Z, z):
@@ -2756,7 +2718,5 @@ class Hull_Parameterization:
             _type_: _description_
         """
         idx = np.where(Z < z)[0][-1]
-
         frac = (z - Z[idx]) / (Z[idx + 1] - Z[idx])
-
         return A[idx] + frac * (A[idx + 1] - A[idx])
