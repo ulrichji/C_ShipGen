@@ -1,1 +1,11 @@
+# Python bytecode related files
 __pycache__/
+
+# Build related files
+*egg-info/
+
+# Virtual environment
+.venv/
+
+# Jupyter specific directories
+.ipynb_checkpoints/
